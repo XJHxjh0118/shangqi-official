@@ -60,3 +60,19 @@ export function vehicleLabel(vehicle: ProductVehicle, locale: string) {
       : ''
   return `${brand} ${model}${years}`.trim()
 }
+
+export function vehicleSummary(
+  vehicles: ProductVehicle[],
+  locale: string,
+  max = 2,
+) {
+  if (!vehicles.length) return { text: '', extra: 0 }
+  const labels = vehicles.map((vehicle) => vehicleLabel(vehicle, locale))
+  if (labels.length <= max) {
+    return { text: labels.join(' / '), extra: 0 }
+  }
+  return {
+    text: labels.slice(0, max).join(' / '),
+    extra: labels.length - max,
+  }
+}

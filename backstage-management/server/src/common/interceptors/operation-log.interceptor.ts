@@ -64,6 +64,8 @@ export class OperationLogInterceptor implements NestInterceptor {
       path.includes('/login') ||
       path.includes('/refresh-token') ||
       path.includes('/register') ||
+      path.includes('/forgot') ||
+      path.includes('/change-password') ||
       path.includes('/health') ||
       path.includes('/assets/upload') ||
       path.includes('/product/asset/upload') ||

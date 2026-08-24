@@ -42,6 +42,7 @@ const {
           <div>
             <div class="gallery-main">
               <img :src="activeSrc" :alt="name" />
+              <ProductFlags :tags="product.tags" />
             </div>
             <div class="thumbs">
               <button

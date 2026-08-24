@@ -27,25 +27,39 @@ enum ProductStatus {
 }
 
 model User {
-  id           Int        @id @default(autoincrement())
-  username     String     @unique
-  passwordHash String     @map("password_hash")
-  nickname     String
-  email        String?
-  company      String?
-  contactName  String?    @map("contact_name")
-  phone        String?
-  region       String?
-  address      String?
-  avatar       String?
-  role         String     @default("EDITOR")
-  status       UserStatus @default(APPROVED)
-  enabled      Boolean    @default(true)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  shareLinks   ShareLink[]
+  id               Int         @id @default(autoincrement())
+  username         String      @unique
+  passwordHash     String      @map("password_hash")
+  nickname         String
+  email            String?
+  company          String?
+  contactName      String?     @map("contact_name")
+  phone            String?
+  region           String?
+  regionalManager  String?     @map("regional_manager")
+  address          String?
+  avatar           String?
+  role             String      @default("EDITOR")
+  status           UserStatus  @default(APPROVED)
+  enabled          Boolean     @default(true)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  shareLinks       ShareLink[]
 
   @@map("users")
+}
+
+model VerificationCode {
+  id        Int       @id @default(autoincrement())
+  account   String
+  purpose   String
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([account, purpose])
+  @@map("verification_codes")
 }
 
 model SiteSettings {

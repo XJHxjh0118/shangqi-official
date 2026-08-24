@@ -87,6 +87,7 @@ export class UsersService {
         contactName: dto.contactName,
         phone: dto.phone,
         region: dto.region,
+        regionalManager: dto.regionalManager,
         address: dto.address,
         passwordHash,
       },
@@ -109,6 +110,7 @@ export class UsersService {
       contactName: dto.contactName,
       phone: dto.phone,
       region: dto.region,
+      regionalManager: dto.regionalManager,
       address: dto.address,
     };
     if (dto.username) data.username = dto.username;

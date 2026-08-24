@@ -48,6 +48,7 @@ const active = computed(() => props.slides[index.value] || props.slides[0])
 
 <template>
   <section
+    id="home-hero"
     class="hero"
     @mouseenter="stop"
     @mouseleave="start"
@@ -67,8 +68,11 @@ const active = computed(() => props.slides[index.value] || props.slides[0])
       />
       <div class="hero-scrim" />
     </div>
+    <div class="hero-grid" aria-hidden="true" />
+    <div class="hero-scan" aria-hidden="true" />
+    <div class="hero-frame" aria-hidden="true" />
 
-    <div v-if="active" class="hero-copy">
+    <div v-if="active" :key="index" class="hero-copy">
       <div class="container">
         <h1>{{ active.title || t('home.heroTitle') }}</h1>
         <p>{{ t('home.heroDesc') }}</p>

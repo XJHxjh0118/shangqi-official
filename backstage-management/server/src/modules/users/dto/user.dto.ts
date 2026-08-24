@@ -19,6 +19,7 @@ const userSelect = {
   contactName: true,
   phone: true,
   region: true,
+  regionalManager: true,
   address: true,
   avatar: true,
   role: true,
@@ -95,6 +96,11 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   region?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  regionalManager?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

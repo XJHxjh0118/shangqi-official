@@ -47,6 +47,7 @@ const form = reactive({
   contactName: "",
   phone: "",
   region: "",
+  regionalManager: "",
   address: "",
   enabled: true
 });
@@ -72,7 +73,8 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "contactName", label: "联系人", width: 120, slot: true },
   { prop: "email", label: "邮箱", minWidth: 180, slot: true },
   { prop: "phone", label: "电话", width: 130 },
-  { prop: "region", label: "区域", width: 140 },
+  { prop: "region", label: "国家/地区", width: 140 },
+  { prop: "regionalManager", label: "区域经理", width: 120 },
   { prop: "address", label: "详细地址", minWidth: 160, slot: true },
   { prop: "status", label: "审批", width: 100, slot: true },
   { prop: "enabled", label: "状态", width: 90, slot: true }
@@ -127,6 +129,7 @@ function clearAccountForm() {
     contactName: "",
     phone: "",
     region: "",
+    regionalManager: "",
     address: "",
     enabled: true
   });
@@ -140,6 +143,7 @@ function fillForm(row: any) {
     contactName: row.contactName || row.nickname || "",
     phone: row.phone || "",
     region: row.region || "",
+    regionalManager: row.regionalManager || "",
     address: row.address || "",
     enabled: row.enabled !== false
   });
@@ -206,6 +210,7 @@ async function submit() {
     contactName: form.contactName,
     phone: form.phone || undefined,
     region: form.region || undefined,
+    regionalManager: form.regionalManager || undefined,
     address: form.address || undefined,
     role: "DEALER",
     enabled: form.enabled
@@ -432,6 +437,9 @@ function onRowAction(key: string, row: any) {
         <el-form-item label="区域">
           <el-input v-model="form.region" placeholder="国家 / 省市区" />
         </el-form-item>
+        <el-form-item label="区域经理">
+          <el-input v-model="form.regionalManager" />
+        </el-form-item>
         <el-form-item label="详细地址">
           <el-input v-model="form.address" type="textarea" :rows="2" />
         </el-form-item>
@@ -471,6 +479,9 @@ function onRowAction(key: string, row: any) {
         </el-descriptions-item>
         <el-descriptions-item label="区域">
           {{ detailRow.region || "—" }}
+        </el-descriptions-item>
+        <el-descriptions-item label="区域经理">
+          {{ detailRow.regionalManager || "—" }}
         </el-descriptions-item>
         <el-descriptions-item label="详细地址">
           {{ detailRow.address || "—" }}

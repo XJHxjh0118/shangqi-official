@@ -14,6 +14,15 @@
     "serviceDesc": "From fitment and install film to global dispatch for daily dealer ops.",
     "vehiclesTitle": "Compatible vehicles",
     "vehiclesDesc": "Choose MG, Roewe or IM to browse matching accessories.",
+    "elevator": {
+      "label": "On this page",
+      "hero": "Top",
+      "featured": "Featured",
+      "hot": "Popular",
+      "new": "New",
+      "services": "Service",
+      "vehicles": "Vehicles"
+    },
     "seo": {
       "title": "SAIC Venture | OEM accessories",
       "desc": "OEM accessories, vehicle fitment and dealer inquiries for SAIC vehicles."

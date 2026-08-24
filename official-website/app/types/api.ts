@@ -194,7 +194,8 @@ export type RegisterPayload = {
   password: string
   company: string
   contactName: string
-  region?: string
+  region: string
+  regionalManager: string
   address?: string
   phone?: string
 }
@@ -214,9 +215,24 @@ export type AuthProfile = {
   contactName?: string | null
   phone?: string | null
   region?: string | null
+  regionalManager?: string | null
   address?: string | null
   status?: string
   roles?: string[]
+}
+
+export type UpdateProfilePayload = {
+  contactName?: string
+  email?: string
+  phone?: string
+  address?: string
+}
+
+export type ForgotSendResult = {
+  sent: boolean
+  via?: string
+  masked?: string
+  devCode?: string
 }
 
 export type AuthLoginResult = {

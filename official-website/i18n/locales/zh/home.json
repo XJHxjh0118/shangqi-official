@@ -14,6 +14,15 @@
     "serviceDesc": "从车型适配、装车视频到全球发运，支持经销商日常运营。",
     "vehiclesTitle": "适配车型",
     "vehiclesDesc": "选择 MG、荣威、智己等车型，查看对应附件。",
+    "elevator": {
+      "label": "本页导航",
+      "hero": "首屏",
+      "featured": "主推",
+      "hot": "热门",
+      "new": "新品",
+      "services": "服务",
+      "vehicles": "车型"
+    },
     "seo": {
       "title": "上汽经创 | 原厂附件门户",
       "desc": "上汽系车型原厂附件展示、车型适配与经销商询盘。"

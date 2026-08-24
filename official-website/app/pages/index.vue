@@ -13,12 +13,38 @@ const {
   pending,
 } = useHomePageData()
 
+useScrollReveal(() => [
+  pending.value,
+  featuredProducts.value.length,
+  services.value.length,
+  homeVehicles.value.length,
+])
+
 const featuredHero = computed(() => featuredProducts.value[0] || null)
 const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
+
+const elevatorItems = computed(() => {
+  const items: Array<{ id: string; label: string }> = []
+  if (heroSlides.value.length) {
+    items.push({ id: 'home-hero', label: t('home.elevator.hero') })
+  }
+  items.push(
+    { id: 'home-featured', label: t('home.elevator.featured') },
+    { id: 'home-hot', label: t('home.elevator.hot') },
+    { id: 'home-new', label: t('home.elevator.new') },
+  )
+  if (services.value.length) {
+    items.push({ id: 'home-services', label: t('home.elevator.services') })
+  }
+  if (homeVehicles.value.length) {
+    items.push({ id: 'home-vehicles', label: t('home.elevator.vehicles') })
+  }
+  return items
+})
 </script>
 
 <template>
-  <div>
+  <div class="home-page">
     <SeoGeoItemList
       :items="
         featuredProducts.map((p) => ({
@@ -27,9 +53,12 @@ const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
         }))
       "
     />
+    <ClientOnly>
+      <HomeElevator :items="elevatorItems" />
+    </ClientOnly>
     <HeroCarousel v-if="heroSlides.length" :slides="heroSlides" />
 
-    <section class="section">
+    <section id="home-featured" class="section home-anchor" data-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -42,7 +71,7 @@ const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
         </div>
 
         <ProductGridSkeleton v-if="pending && !featuredProducts.length" :count="3" />
-        <div v-else class="featured-layout">
+        <div v-else class="featured-layout" data-reveal-stagger>
           <ProductCard v-if="featuredHero" :product="featuredHero" />
           <div class="product-grid" style="grid-template-columns: 1fr">
             <ProductCard
@@ -56,32 +85,38 @@ const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
       </div>
     </section>
 
-    <section class="section" style="padding-top: 0">
+    <section id="home-hot" class="section home-anchor" style="padding-top: 0" data-reveal>
       <div class="container">
         <h2 class="section-title">{{ t('home.hotTitle') }}</h2>
         <p class="section-desc">{{ t('home.hotDesc') }}</p>
         <ProductGridSkeleton v-if="pending && !hotProducts.length" />
-        <div v-else class="product-grid" style="margin-top: 24px">
+        <div v-else class="product-grid" data-reveal-stagger>
           <ProductCard v-for="p in hotProducts" :key="p.id" :product="p" />
         </div>
       </div>
     </section>
 
-    <section class="section" style="padding-top: 0">
+    <section id="home-new" class="section home-anchor" style="padding-top: 0" data-reveal>
       <div class="container">
         <h2 class="section-title">{{ t('home.newTitle') }}</h2>
         <p class="section-desc">{{ t('home.newDesc') }}</p>
-        <div class="product-rail" style="margin-top: 24px">
+        <div class="product-rail" data-reveal-stagger>
           <ProductCard v-for="p in newProducts" :key="p.id" :product="p" />
         </div>
       </div>
     </section>
 
-    <section v-if="services.length" class="section" style="padding-top: 0">
+    <section
+      v-if="services.length"
+      id="home-services"
+      class="section home-anchor"
+      style="padding-top: 0"
+      data-reveal
+    >
       <div class="container">
         <h2 class="section-title">{{ t('home.serviceTitle') }}</h2>
         <p class="section-desc">{{ t('home.serviceDesc') }}</p>
-        <div class="service-list" style="margin-top: 24px">
+        <div class="service-list" style="margin-top: 24px" data-reveal-stagger>
           <article
             v-for="(s, i) in services"
             :key="s.id"
@@ -95,7 +130,13 @@ const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
       </div>
     </section>
 
-    <section v-if="homeVehicles.length" class="section" style="padding-top: 0">
+    <section
+      v-if="homeVehicles.length"
+      id="home-vehicles"
+      class="section home-anchor"
+      style="padding-top: 0"
+      data-reveal
+    >
       <div class="container">
         <div class="section-head">
           <div>
@@ -106,7 +147,7 @@ const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
             {{ t('common.viewAll') }}
           </NuxtLink>
         </div>
-        <div class="vehicle-grid">
+        <div class="vehicle-grid" data-reveal-stagger>
           <NuxtLink
             v-for="vehicle in homeVehicles"
             :key="vehicle.id"

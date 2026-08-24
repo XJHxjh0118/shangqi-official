@@ -6,12 +6,15 @@
     "filterCategory": "All categories",
     "filterVehicle": "All vehicles",
     "filterAll": "All",
-    "viewGrid": "Grid",
-    "viewList": "List",
+    "viewMode": "View mode",
+    "viewGrid": "Grid view",
+    "viewList": "List view",
     "noResult": "No products found",
     "sku": "SKU",
     "new": "New",
     "hot": "Popular",
+    "featured": "Featured",
+    "moreFitment": "+{n}",
     "seo": {
       "title": "Products | SAIC Venture",
       "desc": "Browse SAIC OEM accessories: floor mats, trunk mats, seat covers, visors and charge kits."

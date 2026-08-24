@@ -53,3 +53,16 @@
   border-radius: var(--radius-xs);
   font-weight: 500;
 }
+
+.el-checkbox {
+  --el-checkbox-checked-bg-color: var(--color-accent);
+  --el-checkbox-checked-input-border-color: var(--color-accent);
+  --el-checkbox-checked-text-color: var(--color-ink);
+  --el-checkbox-input-border-radius: var(--radius-xs);
+  height: auto;
+}
+
+.el-checkbox__label {
+  color: var(--color-body);
+  font-weight: 400;
+}

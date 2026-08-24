@@ -26,7 +26,7 @@ export function useAuth() {
 
   const isLoggedIn = computed(() => Boolean(token.value))
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string, remember = true) {
     const data = await apiLogin({ username: email.trim(), password })
     const accessToken = pickAccessToken(data)
     const refresh = pickRefreshToken(data)
@@ -36,7 +36,7 @@ export function useAuth() {
         statusMessage: '登录成功但未返回令牌',
       })
     }
-    setTokens(accessToken, refresh)
+    setTokens(accessToken, refresh, remember)
     profile.value = await getProfile(accessToken)
     return data
   }

@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({ example: 'admin' })
@@ -40,18 +46,82 @@ export class RegisterDto {
   @IsNotEmpty()
   contactName: string;
 
-  @ApiPropertyOptional({ example: '中国 / 上海' })
-  @IsOptional()
+  @ApiProperty({ example: 'CN', description: '所属国家/地区' })
   @IsString()
-  region?: string;
+  @IsNotEmpty()
+  region: string;
+
+  @ApiProperty({ example: '李明远', description: '区域经理姓名' })
+  @IsString()
+  @IsNotEmpty()
+  regionalManager: string;
 
   @ApiPropertyOptional({ example: '浦东新区xx路xx号' })
   @IsOptional()
   @IsString()
   address?: string;
 
+  @ApiPropertyOptional({ example: '+86 21 0000 1001' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+}
+
+export class ForgotSendCodeDto {
+  @ApiProperty({ example: 'dealer@example.com', description: '注册邮箱或手机号' })
+  @IsString()
+  @IsNotEmpty()
+  account: string;
+}
+
+export class ForgotResetDto {
+  @ApiProperty({ example: 'dealer@example.com' })
+  @IsString()
+  @IsNotEmpty()
+  account: string;
+
+  @ApiProperty({ example: '482913' })
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @ApiProperty({ example: 'newpass123' })
+  @IsString()
+  @MinLength(6)
+  password: string;
+}
+
+export class UpdateProfileDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  contactName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
 }

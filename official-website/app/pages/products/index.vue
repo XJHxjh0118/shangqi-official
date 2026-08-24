@@ -63,25 +63,37 @@ const {
             {{ vehicleLabel(v, locale) }}
           </option>
         </select>
-        <div class="view-toggle">
-          <button
-            class="icon-btn"
-            type="button"
-            :aria-pressed="viewMode === 'grid'"
-            @click="viewMode = 'grid'"
+        <div class="view-toggle" role="group" :aria-label="t('products.viewMode')">
+          <el-tooltip
+            :content="t('products.viewGrid')"
+            placement="top"
+            :show-after="200"
           >
-            <PhSquaresFour :size="18" />
-            <span class="sr-only">{{ t('products.viewGrid') }}</span>
-          </button>
-          <button
-            class="icon-btn"
-            type="button"
-            :aria-pressed="viewMode === 'list'"
-            @click="viewMode = 'list'"
+            <button
+              class="icon-btn"
+              type="button"
+              :aria-pressed="viewMode === 'grid'"
+              :aria-label="t('products.viewGrid')"
+              @click="viewMode = 'grid'"
+            >
+              <PhSquaresFour :size="18" />
+            </button>
+          </el-tooltip>
+          <el-tooltip
+            :content="t('products.viewList')"
+            placement="top"
+            :show-after="200"
           >
-            <PhRows :size="18" />
-            <span class="sr-only">{{ t('products.viewList') }}</span>
-          </button>
+            <button
+              class="icon-btn"
+              type="button"
+              :aria-pressed="viewMode === 'list'"
+              :aria-label="t('products.viewList')"
+              @click="viewMode = 'list'"
+            >
+              <PhRows :size="18" />
+            </button>
+          </el-tooltip>
         </div>
       </form>
 
@@ -92,7 +104,7 @@ const {
       >
         <ProductCard v-for="p in list" :key="p.id" :product="p" />
       </div>
-      <div v-else-if="list.length" class="product-grid" style="grid-template-columns: 1fr">
+      <div v-else-if="list.length" class="product-list">
         <ProductCard
           v-for="p in list"
           :key="p.id"

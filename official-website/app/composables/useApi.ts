@@ -19,6 +19,8 @@ import type {
   ProductQuery,
   RegisterPayload,
   SharePage,
+  UpdateProfilePayload,
+  ForgotSendResult,
 } from '~/types/api'
 import { normalizeApiBase, resolveRequestBase } from '~/utils/apiBase'
 
@@ -44,6 +46,9 @@ const paths = {
   login: '/auth/login',
   register: '/auth/register',
   profile: '/auth/profile',
+  forgotSend: '/auth/forgot/send-code',
+  forgotReset: '/auth/forgot/reset',
+  changePassword: '/auth/change-password',
 } as const
 
 export function useApi() {
@@ -156,7 +161,22 @@ export function useApi() {
     register: (body: RegisterPayload) =>
       apiFetch(paths.register, { method: 'POST', body }),
 
+    sendResetCode: (account: string) =>
+      apiFetch<ForgotSendResult>(paths.forgotSend, {
+        method: 'POST',
+        body: { account },
+      }),
+
+    resetPassword: (body: { account: string; code: string; password: string }) =>
+      apiFetch(paths.forgotReset, { method: 'POST', body }),
+
     getProfile: (accessToken?: string | null) =>
       apiFetch<AuthProfile>(paths.profile, { accessToken }),
+
+    updateProfile: (body: UpdateProfilePayload) =>
+      apiFetch<AuthProfile>(paths.profile, { method: 'PATCH', body }),
+
+    changePassword: (body: { currentPassword: string; newPassword: string }) =>
+      apiFetch(paths.changePassword, { method: 'POST', body }),
   }
 }

@@ -20,8 +20,8 @@ export class NotifyService {
       tasks.push(this.sendWebhook(webhook, payload));
     }
 
-    if (this.isSmtpConfigured()) {
-      tasks.push(this.sendSmtp(payload));
+    if (this.isOpsSmtpConfigured()) {
+      tasks.push(this.sendSmtp(payload, this.config.get<string>('NOTIFY_TO')!));
     }
 
     if (!tasks.length) {
@@ -32,12 +32,27 @@ export class NotifyService {
     await Promise.allSettled(tasks);
   }
 
-  private isSmtpConfigured(): boolean {
-    return Boolean(
-      this.config.get('SMTP_HOST') &&
-        this.config.get('SMTP_FROM') &&
-        this.config.get('NOTIFY_TO'),
-    );
+  async sendTo(to: string, payload: NotifyPayload): Promise<boolean> {
+    if (!to) return false;
+    if (!this.hasSmtpTransport()) {
+      this.logger.log(`[mail:${to}] ${payload.subject}\n${payload.text}`);
+      return false;
+    }
+    try {
+      await this.sendSmtp(payload, to);
+      return true;
+    } catch (err) {
+      this.logger.warn(`SMTP user mail error: ${String(err)}`);
+      return false;
+    }
+  }
+
+  hasSmtpTransport(): boolean {
+    return Boolean(this.config.get('SMTP_HOST') && this.config.get('SMTP_FROM'));
+  }
+
+  private isOpsSmtpConfigured(): boolean {
+    return this.hasSmtpTransport() && Boolean(this.config.get('NOTIFY_TO'));
   }
 
   private async sendWebhook(url: string, payload: NotifyPayload): Promise<void> {
@@ -55,29 +70,25 @@ export class NotifyService {
     }
   }
 
-  private async sendSmtp(payload: NotifyPayload): Promise<void> {
-    try {
-      const nodemailer = await import('nodemailer');
-      const transport = nodemailer.createTransport({
-        host: this.config.get<string>('SMTP_HOST'),
-        port: Number(this.config.get('SMTP_PORT') || 587),
-        secure: this.config.get('SMTP_SECURE') === 'true',
-        auth: this.config.get('SMTP_USER')
-          ? {
-              user: this.config.get<string>('SMTP_USER'),
-              pass: this.config.get<string>('SMTP_PASS'),
-            }
-          : undefined,
-      });
+  private async sendSmtp(payload: NotifyPayload, to: string): Promise<void> {
+    const nodemailer = await import('nodemailer');
+    const transport = nodemailer.createTransport({
+      host: this.config.get<string>('SMTP_HOST'),
+      port: Number(this.config.get('SMTP_PORT') || 587),
+      secure: this.config.get('SMTP_SECURE') === 'true',
+      auth: this.config.get('SMTP_USER')
+        ? {
+            user: this.config.get<string>('SMTP_USER'),
+            pass: this.config.get<string>('SMTP_PASS'),
+          }
+        : undefined,
+    });
 
-      await transport.sendMail({
-        from: this.config.get<string>('SMTP_FROM'),
-        to: this.config.get<string>('NOTIFY_TO'),
-        subject: payload.subject,
-        text: payload.text,
-      });
-    } catch (err) {
-      this.logger.warn(`SMTP notify error: ${String(err)}`);
-    }
+    await transport.sendMail({
+      from: this.config.get<string>('SMTP_FROM'),
+      to,
+      subject: payload.subject,
+      text: payload.text,
+    });
   }
 }

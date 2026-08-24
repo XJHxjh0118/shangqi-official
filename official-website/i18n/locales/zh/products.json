@@ -6,12 +6,15 @@
     "filterCategory": "全部分类",
     "filterVehicle": "全部车型",
     "filterAll": "全部",
-    "viewGrid": "网格",
-    "viewList": "列表",
+    "viewMode": "视图切换",
+    "viewGrid": "网格视图",
+    "viewList": "列表视图",
     "noResult": "暂无匹配产品",
     "sku": "编号",
     "new": "新品",
     "hot": "热门",
+    "featured": "主推",
+    "moreFitment": "+{n}",
     "seo": {
       "title": "产品中心 | 上汽经创",
       "desc": "浏览上汽系原厂附件：脚垫、后备箱垫、座椅套、晴雨挡与充电收纳。"
