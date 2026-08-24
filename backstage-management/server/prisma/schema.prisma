@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AssetType {
+  IMAGE
+  VIDEO
+  PDF
+  OTHER
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  passwordHash String     @map("password_hash")
+  nickname     String
+  email        String?
+  company      String?
+  contactName  String?    @map("contact_name")
+  phone        String?
+  region       String?
+  address      String?
+  avatar       String?
+  role         String     @default("EDITOR")
+  status       UserStatus @default(APPROVED)
+  enabled      Boolean    @default(true)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  shareLinks   ShareLink[]
+
+  @@map("users")
+}
+
+model SiteSettings {
+  id               Int      @id @default(1)
+  siteNameZh       String   @default("模板站点") @map("site_name_zh")
+  siteNameEn       String   @default("Template Site") @map("site_name_en")
+  logoUrl          String?  @map("logo_url")
+  faviconUrl       String?  @map("favicon_url")
+  heroImageUrl     String?  @map("hero_image_url")
+  seoKeywordsZh    String?  @map("seo_keywords_zh")
+  seoKeywordsEn    String?  @map("seo_keywords_en")
+  seoDescriptionZh String?  @map("seo_description_zh")
+  seoDescriptionEn String?  @map("seo_description_en")
+  contactEmail     String?  @map("contact_email")
+  contactPhone     String?  @map("contact_phone")
+  footerTextZh     String?  @map("footer_text_zh")
+  footerTextEn     String?  @map("footer_text_en")
+  aboutTitleZh     String?  @map("about_title_zh")
+  aboutTitleEn     String?  @map("about_title_en")
+  aboutBodyZh      String?  @map("about_body_zh")
+  aboutBodyEn      String?  @map("about_body_en")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model Category {
+  id        Int            @id @default(autoincrement())
+  code      String         @unique
+  parentId  Int?           @map("parent_id")
+  parent    Category?      @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[]     @relation("CategoryTree")
+  nameZh    String         @map("name_zh")
+  nameEn    String         @map("name_en")
+  sort      Int            @default(0)
+  enabled   Boolean        @default(true)
+  i18n      CategoryI18n[]
+  products  Product[]
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
+model CategoryI18n {
+  id         Int      @id @default(autoincrement())
+  categoryId Int      @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     String
+  name       String
+
+  @@unique([categoryId, locale])
+  @@map("category_i18n")
+}
+
+model Product {
+  id              Int            @id @default(autoincrement())
+  sku             String         @unique
+  slug            String         @unique
+  categoryId      Int            @map("category_id")
+  category        Category       @relation(fields: [categoryId], references: [id])
+  isNew           Boolean        @default(false) @map("is_new")
+  isHot           Boolean        @default(false) @map("is_hot")
+  installLevel    String?        @map("install_level")
+  assetPackUrl    String?        @map("asset_pack_url")
+  coverUrl        String?        @map("cover_url")
+  coverName       String?        @map("cover_name")
+  promoVideoUrl   String?        @map("promo_video_url")
+  promoVideoName  String?        @map("promo_video_name")
+  installVideoUrl String?        @map("install_video_url")
+  installVideoName String?       @map("install_video_name")
+  isFeatured      Boolean        @default(false) @map("is_featured")
+  status          ProductStatus  @default(DRAFT)
+  sort            Int            @default(0)
+  i18n            ProductI18n[]
+  assets          ProductAsset[]
+  vehicles        ProductVehicle[]
+  inquiryItems    InquiryItem[]
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([categoryId])
+  @@index([status])
+  @@map("products")
+}
+
+model ProductI18n {
+  id             Int     @id @default(autoincrement())
+  productId      Int     @map("product_id")
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale         String
+  name           String
+  description    String
+  material       String?
+  size           String?
+  color          String?
+  seoTitle       String? @map("seo_title")
+  seoKeywords    String? @map("seo_keywords")
+  seoDescription String? @map("seo_description")
+
+  @@unique([productId, locale])
+  @@map("product_i18n")
+}
+
+model ProductAsset {
+  id           Int       @id @default(autoincrement())
+  productId    Int       @map("product_id")
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type         AssetType @default(IMAGE)
+  url          String
+  thumbnailUrl String?   @map("thumbnail_url")
+  name         String?
+  size         Int?
+  sort         Int       @default(0)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([productId])
+  @@map("product_assets")
+}
+
+model Banner {
+  id        Int          @id @default(autoincrement())
+  titleZh   String       @map("title_zh")
+  titleEn   String       @map("title_en")
+  imageUrl  String       @map("image_url")
+  linkUrl   String?      @map("link_url")
+  sort      Int          @default(0)
+  enabled   Boolean      @default(true)
+  startAt   DateTime?    @map("start_at")
+  endAt     DateTime?    @map("end_at")
+  i18n      BannerI18n[]
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+model BannerI18n {
+  id       Int    @id @default(autoincrement())
+  bannerId Int    @map("banner_id")
+  banner   Banner @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  locale   String
+  title    String
+
+  @@unique([bannerId, locale])
+  @@map("banner_i18n")
+}
+
+model ContactPerson {
+  id        Int      @id @default(autoincrement())
+  regionZh  String   @map("region_zh")
+  regionEn  String   @map("region_en")
+  name      String
+  email     String?
+  phone     String?
+  sort      Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("contact_persons")
+}
+
+model Inquiry {
+  id          Int           @id @default(autoincrement())
+  company     String
+  contactName String        @map("contact_name")
+  email       String
+  phone       String?
+  region      String?
+  message     String?
+  status      String        @default("NEW")
+  items       InquiryItem[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("inquiries")
+}
+
+model InquiryItem {
+  id        Int     @id @default(autoincrement())
+  inquiryId Int     @map("inquiry_id")
+  inquiry   Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  note      String?
+
+  @@map("inquiry_items")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  company   String?
+  region    String?
+  content   String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("contact_messages")
+}
+
+model Vehicle {
+  id        Int              @id @default(autoincrement())
+  code      String           @unique
+  brandZh   String           @map("brand_zh")
+  brandEn   String           @map("brand_en")
+  modelZh   String           @map("model_zh")
+  modelEn   String           @map("model_en")
+  yearFrom  Int?             @map("year_from")
+  yearTo    Int?             @map("year_to")
+  sort      Int              @default(0)
+  enabled   Boolean          @default(true)
+  products  ProductVehicle[]
+  homeSlot  HomeVehicle?
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@map("vehicles")
+}
+
+model HomeVehicle {
+  id        Int      @id @default(autoincrement())
+  vehicleId Int      @unique @map("vehicle_id")
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  imageUrl  String   @map("image_url")
+  sort      Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([enabled, sort])
+  @@map("home_vehicles")
+}
+
+model ProductVehicle {
+  productId Int     @map("product_id")
+  vehicleId Int     @map("vehicle_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@id([productId, vehicleId])
+  @@map("product_vehicles")
+}
+
+model PageSeo {
+  id             Int      @id @default(autoincrement())
+  pageKey        String   @unique @map("page_key")
+  titleZh        String?  @map("title_zh")
+  titleEn        String?  @map("title_en")
+  keywordsZh     String?  @map("keywords_zh")
+  keywordsEn     String?  @map("keywords_en")
+  descriptionZh  String?  @map("description_zh")
+  descriptionEn  String?  @map("description_en")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("page_seos")
+}
+
+model ServiceItem {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  titleZh   String   @map("title_zh")
+  titleEn   String   @map("title_en")
+  bodyZh    String?  @map("body_zh")
+  bodyEn    String?  @map("body_en")
+  iconUrl   String?  @map("icon_url")
+  sort      Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("service_items")
+}
+
+model ShareLink {
+  id          Int       @id @default(autoincrement())
+  token       String    @unique
+  title       String?
+  createdById Int?      @map("created_by_id")
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  productIds  String    @map("product_ids")
+  expiresAt   DateTime? @map("expires_at")
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([createdById])
+  @@map("share_links")
+}
+
+model OperationLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  username   String?
+  module     String
+  action     String
+  method     String
+  path       String
+  ip         String?
+  statusCode Int?     @map("status_code")
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([username])
+  @@map("operation_logs")
+}
+
+model SysRole {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  name        String
+  description String   @default("")
+  menus       String   @default("[]")
+  isSystem    Boolean  @default(false) @map("is_system")
+  enabled     Boolean  @default(true)
+  sort        Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("sys_roles")
+}

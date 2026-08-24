@@ -1,0 +1,30 @@
+{
+  "inquiry": {
+    "title": "Inquiry list",
+    "desc": "Confirm accessories and quantities, then submit dealer details. Include model year if needed.",
+    "empty": "Your list is empty. Add floor mats, trunk mats or other kits from the catalog first.",
+    "browse": "Browse products",
+    "company": "Company",
+    "contact": "Contact name",
+    "email": "Email",
+    "phone": "Phone",
+    "region": "Region",
+    "message": "Notes",
+    "submit": "Submit inquiry",
+    "success": "Submitted. We will contact you soon.",
+    "regions": {
+      "asia": "Asia",
+      "europe": "Europe",
+      "anz": "ANZ",
+      "sea": "Southeast Asia",
+      "americas": "Americas",
+      "me_africa": "Middle East and Africa",
+      "latam": "Latin America",
+      "russia": "Russia"
+    },
+    "seo": {
+      "title": "Inquiry | SAIC Venture",
+      "desc": "Submit a SAIC accessory inquiry with fitment and quantity notes."
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "home": {
+    "heroTitle": "SAIC OEM accessory dealer portal",
+    "heroDesc": "MG, Roewe, IM, Maxus and Rising install kits: mats, cargo, exterior and EV packs.",
+    "ctaExplore": "Browse products",
+    "ctaInquiry": "Send inquiry",
+    "featuredTitle": "Featured",
+    "featuredDesc": "Priority SAIC install kits currently promoted to dealers.",
+    "hotTitle": "Popular",
+    "hotDesc": "Mats and visors with concentrated recent inquiries.",
+    "newTitle": "New",
+    "newDesc": "Latest cargo mats and scuff plates. Swipe to browse.",
+    "serviceTitle": "Service system",
+    "serviceDesc": "From fitment and install film to global dispatch for daily dealer ops.",
+    "vehiclesTitle": "Compatible vehicles",
+    "vehiclesDesc": "Choose MG, Roewe or IM to browse matching accessories.",
+    "seo": {
+      "title": "SAIC Venture | OEM accessories",
+      "desc": "OEM accessories, vehicle fitment and dealer inquiries for SAIC vehicles."
+    }
+  }
+}

@@ -1,0 +1,14 @@
+2026-08-03T07:35:45.022701Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2026-08-03T07:35:45.176585Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 26.7\bin\mysqld.exe (mysqld 26.7.0) starting as process 52988
+2026-08-03T07:35:45.177054Z 0 [System] [MY-015603] [Server] MySQL Server has access to 16 logical CPUs.
+2026-08-03T07:35:45.177212Z 0 [System] [MY-015603] [Server] MySQL Server has access to 34160369664 bytes of physical memory.
+2026-08-03T07:35:45.209885Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-08-03T07:35:45.521152Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-08-03T07:35:45.675450Z 0 [System] [MY-010229] [Server] Starting XA crash recovery...
+2026-08-03T07:35:45.679675Z 0 [System] [MY-010232] [Server] XA crash recovery finished.
+2026-08-03T07:35:45.780695Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2026-08-03T07:35:45.780802Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2026-08-03T07:35:45.780854Z 0 [Warning] [MY-015696] [Server] TLS channel 'mysql_main' is not configured to require post-quantum key exchange algorithms; future TLS sessions may use a non-post-quantum key exchange algorithm because force_pqc is disabled
+2026-08-03T07:35:45.819926Z 0 [Warning] [MY-015696] [Server] Plugin mysqlx reported: 'TLS channel 'mysqlx' is not configured to require post-quantum key exchange algorithms; future TLS sessions may use a non-post-quantum key exchange algorithm because force_pqc is disabled'
+2026-08-03T07:35:45.820437Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2026-08-03T07:35:45.820980Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 26.7\bin\mysqld.exe: ready for connections. Version: '26.7.0'  socket: ''  port: 3306  MySQL Community Server - GPL.

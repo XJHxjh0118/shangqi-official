@@ -1,0 +1,26 @@
+{
+  "join": {
+    "title": "Careers",
+    "desc": "Hiring for vehicle fitment, overseas dealer ops and accessory development across MG, Roewe and IM.",
+    "openingsTitle": "Open roles",
+    "openings": {
+      "fitment": {
+        "title": "Fitment engineer",
+        "body": "Validate MG / Roewe / IM accessory tooling, install checks and manuals."
+      },
+      "dealer": {
+        "title": "Overseas dealer operations",
+        "body": "Support inquiries, asset packs and in-store training for Europe, SEA and the Middle East."
+      },
+      "product": {
+        "title": "Accessory product manager",
+        "body": "Plan model-year updates for mats, cargo and EV kits."
+      }
+    },
+    "name": "Name",
+    "email": "Email",
+    "message": "Your interest (role / vehicle experience)",
+    "submit": "Submit",
+    "success": "Received. We will contact you soon."
+  }
+}

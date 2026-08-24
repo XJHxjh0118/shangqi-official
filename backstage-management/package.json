@@ -1,0 +1,17 @@
+{
+  "name": "backstage-management",
+  "private": true,
+  "description": "官网运营后台（NestJS API + Vue Admin）",
+  "scripts": {
+    "dev": "concurrently -k -n api,admin -c cyan,magenta \"npm --prefix server run start:dev\" \"pnpm --dir admin dev\"",
+    "dev:api": "npm --prefix server run start:dev",
+    "dev:admin": "pnpm --dir admin dev",
+    "setup": "npm --prefix server install && npm --prefix server exec prisma generate && pnpm --dir admin install && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.13.0"
+  }
+}

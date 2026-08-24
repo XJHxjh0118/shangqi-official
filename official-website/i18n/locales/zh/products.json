@@ -1,0 +1,33 @@
+{
+  "products": {
+    "title": "产品中心",
+    "desc": "按脚垫、后备厢、外观与新能源分类，或按 MG / 荣威 / 智己等车型筛选。",
+    "searchPlaceholder": "搜索名称或编号",
+    "filterCategory": "全部分类",
+    "filterVehicle": "全部车型",
+    "filterAll": "全部",
+    "viewGrid": "网格",
+    "viewList": "列表",
+    "noResult": "暂无匹配产品",
+    "sku": "编号",
+    "new": "新品",
+    "hot": "热门",
+    "seo": {
+      "title": "产品中心 | 上汽经创",
+      "desc": "浏览上汽系原厂附件：脚垫、后备箱垫、座椅套、晴雨挡与充电收纳。"
+    },
+    "categories": {
+      "interior": "座舱内饰",
+      "floor-mats": "脚垫",
+      "seat-covers": "座椅套",
+      "trunk": "后备厢",
+      "trunk-mats": "后备箱垫",
+      "exterior": "外观件",
+      "weather-shields": "晴雨挡",
+      "car-covers": "车衣",
+      "ev": "新能源附件",
+      "scuff-plates": "迎宾踏板",
+      "ev-cables": "充电收纳"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "account": {
+    "title": "Account",
+    "desc": "Dealer profile, accessory inquiry list and saved products.",
+    "inquiryCount": "{n} items in inquiry list",
+    "favoritesTitle": "Saved products",
+    "favoritesDesc": "Products you saved. Add them to an inquiry anytime.",
+    "favoritesEmpty": "Nothing saved yet.",
+    "shareTitle": "Shared products",
+    "shareDesc": "Read-only product list from a dealer share link.",
+    "shareMissing": "This share link is invalid or expired."
+  }
+}

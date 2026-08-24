@@ -1,0 +1,20 @@
+{
+  "detail": {
+    "specs": "Specifications",
+    "material": "Material",
+    "size": "Size",
+    "color": "Color",
+    "install": "Install level",
+    "vehicles": "Compatible vehicles",
+    "promoVideo": "Product video",
+    "installVideo": "Install video",
+    "pdf": "Install PDF",
+    "assets": "Assets",
+    "downloadPack": "Download pack",
+    "addInquiry": "Add to inquiry",
+    "added": "Added to inquiry",
+    "favorite": "Save",
+    "favorited": "Saved",
+    "related": "Related products"
+  }
+}

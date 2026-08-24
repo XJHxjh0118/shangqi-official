@@ -1,0 +1,18 @@
+{
+  "contact": {
+    "title": "Regional contacts",
+    "desc": "Find a regional SAIC accessory contact or leave a vehicle and parts request.",
+    "formTitle": "Message",
+    "name": "Name",
+    "email": "Email",
+    "region": "Region",
+    "message": "Message",
+    "submit": "Send",
+    "success": "Message sent.",
+    "general": "General",
+    "seo": {
+      "title": "Contact | SAIC Venture",
+      "desc": "Reach a regional SAIC accessory desk or send a vehicle parts request."
+    }
+  }
+}

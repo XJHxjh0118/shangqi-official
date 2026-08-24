@@ -1,0 +1,26 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: official-site-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: official_site
+      MYSQL_USER: site
+      MYSQL_PASSWORD: site123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - official_site_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  official_site_mysql_data:

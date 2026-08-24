@@ -1,0 +1,14 @@
+node_modules/
+.nuxt/
+.output/
+dist/
+.env
+.env.production
+*.db
+*.db-journal
+uploads/
+coverage/
+.data/
+.DS_Store
+.cursor/
+.agents/

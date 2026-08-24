@@ -1,0 +1,37 @@
+{
+  "brand": {
+    "name": "上汽经创",
+    "tagline": "上汽系原厂附件门户",
+    "full": "上汽经创原厂附件门户"
+  },
+  "nav": {
+    "home": "首页",
+    "products": "产品中心",
+    "inquiry": "询盘",
+    "contact": "联系",
+    "about": "关于我们",
+    "join": "加入我们",
+    "account": "账号",
+    "favorites": "收藏"
+  },
+  "footer": {
+    "rights": "保留所有权利",
+    "portal": "面向全球经销商的上汽系附件展示与询盘门户",
+    "regions": "服务区域"
+  },
+  "common": {
+    "learnMore": "了解更多",
+    "viewAll": "查看全部",
+    "back": "返回产品中心",
+    "loading": "加载中",
+    "lang": "语言",
+    "search": "搜索",
+    "remove": "移除",
+    "menu": "菜单",
+    "notFoundTitle": "页面未找到",
+    "notFoundDesc": "您访问的页面不存在或已被移除。",
+    "errorTitle": "服务暂不可用",
+    "errorDesc": "请稍后重试。",
+    "backHome": "返回首页"
+  }
+}

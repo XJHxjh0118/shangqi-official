@@ -1,0 +1,55 @@
+.el-form {
+  --el-color-primary: var(--color-accent);
+  --el-color-primary-light-3: color-mix(in srgb, var(--color-accent) 70%, white);
+  --el-color-primary-light-5: color-mix(in srgb, var(--color-accent) 50%, white);
+  --el-color-primary-light-7: color-mix(in srgb, var(--color-accent) 30%, white);
+  --el-color-primary-light-9: color-mix(in srgb, var(--color-accent) 12%, white);
+  --el-color-primary-dark-2: color-mix(in srgb, var(--color-accent) 82%, black);
+  --el-border-radius-base: var(--radius-xs);
+  --el-font-size-base: 14px;
+  --el-text-color-regular: var(--color-ink);
+  --el-text-color-placeholder: var(--color-placeholder);
+  --el-border-color: var(--color-hairline);
+  --el-border-color-hover: var(--color-muted);
+  --el-fill-color-blank: var(--color-surface);
+  --el-bg-color: var(--color-canvas);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: var(--radius-xs) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--color-hairline);
+  min-height: 40px;
+  background: var(--color-surface) !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  border-color: var(--color-ink) !important;
+}
+
+.el-form-item__label {
+  color: var(--color-ink);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--color-accent);
+  --el-button-border-color: var(--color-accent);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--color-accent) 88%, black);
+  --el-button-hover-border-color: color-mix(in srgb, var(--color-accent) 88%, black);
+  --el-button-text-color: var(--color-on-accent);
+  height: 40px;
+  min-width: 160px;
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+}
+
+.el-button {
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+}

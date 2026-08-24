@@ -1,0 +1,37 @@
+{
+  "brand": {
+    "name": "SAIC Venture",
+    "tagline": "SAIC OEM accessory portal",
+    "full": "SAIC Venture OEM accessory portal"
+  },
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "inquiry": "Inquiry",
+    "contact": "Contact",
+    "about": "About",
+    "join": "Careers",
+    "account": "Account",
+    "favorites": "Saved"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "portal": "SAIC accessory showcase and inquiry portal for global dealers",
+    "regions": "Service regions"
+  },
+  "common": {
+    "learnMore": "Learn more",
+    "viewAll": "View all",
+    "back": "Back to products",
+    "loading": "Loading",
+    "lang": "Language",
+    "search": "Search",
+    "remove": "Remove",
+    "menu": "Menu",
+    "notFoundTitle": "Page not found",
+    "notFoundDesc": "The page you are looking for does not exist or was removed.",
+    "errorTitle": "Service unavailable",
+    "errorDesc": "Please try again later.",
+    "backHome": "Back to home"
+  }
+}

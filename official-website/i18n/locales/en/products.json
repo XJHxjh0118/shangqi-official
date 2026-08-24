@@ -1,0 +1,33 @@
+{
+  "products": {
+    "title": "Products",
+    "desc": "Filter by cabin, cargo, exterior and EV kits, or by MG / Roewe / IM vehicles.",
+    "searchPlaceholder": "Search name or SKU",
+    "filterCategory": "All categories",
+    "filterVehicle": "All vehicles",
+    "filterAll": "All",
+    "viewGrid": "Grid",
+    "viewList": "List",
+    "noResult": "No products found",
+    "sku": "SKU",
+    "new": "New",
+    "hot": "Popular",
+    "seo": {
+      "title": "Products | SAIC Venture",
+      "desc": "Browse SAIC OEM accessories: floor mats, trunk mats, seat covers, visors and charge kits."
+    },
+    "categories": {
+      "interior": "Cabin interior",
+      "floor-mats": "Floor mats",
+      "seat-covers": "Seat covers",
+      "trunk": "Cargo",
+      "trunk-mats": "Trunk mats",
+      "exterior": "Exterior",
+      "weather-shields": "Weather shields",
+      "car-covers": "Car covers",
+      "ev": "EV accessories",
+      "scuff-plates": "Scuff plates",
+      "ev-cables": "Charge kits"
+    }
+  }
+}

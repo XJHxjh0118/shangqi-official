@@ -1,0 +1,13 @@
+{
+  "account": {
+    "title": "账号管理",
+    "desc": "查看经销商资料、附件询盘清单与收藏。",
+    "inquiryCount": "询盘清单 {n} 件",
+    "favoritesTitle": "收藏",
+    "favoritesDesc": "已收藏的产品，可随时加入询盘。",
+    "favoritesEmpty": "暂无收藏。",
+    "shareTitle": "产品分享",
+    "shareDesc": "经销商分享的只读产品列表。",
+    "shareMissing": "分享链接无效或已过期。"
+  }
+}

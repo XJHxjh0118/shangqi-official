@@ -1,0 +1,22 @@
+mysqld_started
+
+Status   Name               DisplayName                           
+------   ----               -----------                           
+Stopped  MySQL267           MySQL267                              
+
+
+
+
+LocalPort    State
+---------    -----
+     3306   Listen
+     3306 TimeWait
+     3306 TimeWait
+     3306 TimeWait
+     3306 TimeWait
+     3306 TimeWait
+     3306 TimeWait
+     3306 TimeWait
+
+
+

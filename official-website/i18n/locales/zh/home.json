@@ -1,0 +1,22 @@
+{
+  "home": {
+    "heroTitle": "上汽系原厂附件经销商门户",
+    "heroDesc": "MG、荣威、智己、大通、飞凡装车配件：脚垫、后备厢、外观与新能源套装。",
+    "ctaExplore": "浏览产品",
+    "ctaInquiry": "提交询盘",
+    "featuredTitle": "主推推荐",
+    "featuredDesc": "当前主推给经销商的上汽系装车附件。",
+    "hotTitle": "热门产品",
+    "hotDesc": "近期询盘集中的脚垫、晴雨挡等型号。",
+    "newTitle": "新品",
+    "newDesc": "最新开模的后备厢与迎宾踏板，可左右滑动查看。",
+    "serviceTitle": "服务体系",
+    "serviceDesc": "从车型适配、装车视频到全球发运，支持经销商日常运营。",
+    "vehiclesTitle": "适配车型",
+    "vehiclesDesc": "选择 MG、荣威、智己等车型，查看对应附件。",
+    "seo": {
+      "title": "上汽经创 | 原厂附件门户",
+      "desc": "上汽系车型原厂附件展示、车型适配与经销商询盘。"
+    }
+  }
+}
