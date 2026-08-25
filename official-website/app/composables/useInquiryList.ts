@@ -4,6 +4,7 @@ export type InquiryItem = {
   name: string
   qty: number
   image?: string
+  slug?: string
 }
 
 // v2：id 改为后端数字产品 ID（字符串形式），旧 mock 购物车作废
@@ -32,6 +33,10 @@ export function useInquiryList() {
     }
   }
 
+  function has(id: string) {
+    return items.value.some((item) => item.id === id)
+  }
+
   function addItem(item: Omit<InquiryItem, 'qty'> & { qty?: number }) {
     const existing = items.value.find((i) => i.id === item.id)
     if (existing) {
@@ -40,6 +45,14 @@ export function useInquiryList() {
       items.value.push({ ...item, qty: item.qty || 1 })
     }
     persist()
+  }
+
+  function toggleItem(item: Omit<InquiryItem, 'qty'> & { qty?: number }) {
+    if (has(item.id)) {
+      removeItem(item.id)
+      return
+    }
+    addItem(item)
   }
 
   function updateQty(id: string, qty: number) {
@@ -62,5 +75,5 @@ export function useInquiryList() {
 
   const count = computed(() => items.value.reduce((sum, i) => sum + i.qty, 0))
 
-  return { items, count, addItem, updateQty, removeItem, clear }
+  return { items, count, has, addItem, toggleItem, updateQty, removeItem, clear }
 }

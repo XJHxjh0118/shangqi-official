@@ -318,7 +318,7 @@ function onRowAction(key: string, row: any) {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <p class="mb-4 text-sm text-gray-500">
         管理官网前台经销商账号：审批、下架与维护联系信息。

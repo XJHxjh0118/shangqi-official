@@ -152,6 +152,15 @@ export class ProductsService {
     return { count: result.count };
   }
 
+  async batchRemove(ids: number[]) {
+    if (!ids.length) throw new BadRequestException('请选择产品');
+    await this.prisma.$transaction([
+      this.prisma.inquiryItem.deleteMany({ where: { productId: { in: ids } } }),
+      this.prisma.product.deleteMany({ where: { id: { in: ids } } }),
+    ]);
+    return true;
+  }
+
   async remove(id: number) {
     await this.findOne(id);
     await this.prisma.product.delete({ where: { id } });

@@ -47,6 +47,12 @@ export class ProductsController {
     return this.productsService.batchUpdate(dto);
   }
 
+  @Delete('batch')
+  @Menus('product:list')
+  batchRemove(@Body() dto: BatchProductDto) {
+    return this.productsService.batchRemove(dto.ids);
+  }
+
   @Patch('update/:id')
   @Menus('product:list', 'cms:featured', 'cms:new-hot')
   update(

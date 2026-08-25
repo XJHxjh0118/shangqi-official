@@ -8,6 +8,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  ArrayMinSize,
   ValidateNested,
 } from 'class-validator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -298,6 +299,7 @@ export class UpdateProductDto {
 export class BatchProductDto {
   @ApiProperty({ type: [Number] })
   @IsArray()
+  @ArrayMinSize(1, { message: '请选择产品' })
   @Type(() => Number)
   @IsInt({ each: true })
   ids: number[];

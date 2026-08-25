@@ -11,14 +11,14 @@ export class SiteSettingsController {
   constructor(private readonly service: SiteSettingsService) {}
 
   @Get('detail')
-  @Menus('cms:banner', 'cms:featured', 'cms:new-hot', 'cms:service')
+  @Menus('cms:banner', 'cms:featured', 'cms:new-hot', 'cms:service', 'seo:pages')
   @ApiOperation({ summary: '获取站点配置' })
   get() {
     return this.service.getOrCreate();
   }
 
   @Put('update')
-  @Menus('cms:banner', 'cms:featured', 'cms:new-hot', 'cms:service')
+  @Menus('cms:banner', 'cms:featured', 'cms:new-hot', 'cms:service', 'seo:pages')
   @ApiOperation({ summary: '更新站点配置' })
   update(@Body() dto: UpdateSiteSettingsDto) {
     return this.service.update(dto);

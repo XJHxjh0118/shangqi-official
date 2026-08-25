@@ -10,6 +10,8 @@
     "submit": "Send",
     "success": "Message sent.",
     "general": "General",
+    "deskTitle": "Regional desk",
+    "hint": "Include the vehicle, part number, and quantity so the desk can reply.",
     "seo": {
       "title": "Contact | SAIC Venture",
       "desc": "Reach a regional SAIC accessory desk or send a vehicle parts request."

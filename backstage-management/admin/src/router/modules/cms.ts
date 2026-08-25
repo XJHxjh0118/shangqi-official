@@ -7,7 +7,7 @@ export default {
   redirect: "/cms/banner",
   meta: {
     icon: "ep/picture",
-    title: "首页内容管理",
+    title: "内容管理",
     rank: 4,
     menu: "cms"
   },

@@ -8,9 +8,8 @@
     "home": "首页",
     "products": "产品中心",
     "inquiry": "询盘",
-    "contact": "联系",
+    "contact": "联系我们",
     "about": "关于我们",
-    "join": "加入我们",
     "account": "账号",
     "favorites": "收藏"
   },
@@ -28,6 +27,7 @@
     "search": "搜索",
     "remove": "移除",
     "menu": "菜单",
+    "close": "关闭",
     "notFoundTitle": "页面未找到",
     "notFoundDesc": "您访问的页面不存在或已被移除。",
     "errorTitle": "服务暂不可用",

@@ -86,4 +86,14 @@ export class UpdateSiteSettingsDto {
   @IsOptional()
   @IsString()
   aboutBodyEn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contactBodyZh?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contactBodyEn?: string;
 }

@@ -161,7 +161,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <p class="mb-4 text-sm text-gray-500">
         管理可登录后台的员工账号，角色权限在「角色管理」中配置。

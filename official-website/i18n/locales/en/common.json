@@ -8,9 +8,8 @@
     "home": "Home",
     "products": "Products",
     "inquiry": "Inquiry",
-    "contact": "Contact",
+    "contact": "Contact Us",
     "about": "About",
-    "join": "Careers",
     "account": "Account",
     "favorites": "Saved"
   },
@@ -28,6 +27,7 @@
     "search": "Search",
     "remove": "Remove",
     "menu": "Menu",
+    "close": "Close",
     "notFoundTitle": "Page not found",
     "notFoundDesc": "The page you are looking for does not exist or was removed.",
     "errorTitle": "Service unavailable",

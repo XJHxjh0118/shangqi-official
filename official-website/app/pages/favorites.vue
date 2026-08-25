@@ -1,12 +1,25 @@
 <script setup lang="ts">
+import type { FavoriteItem } from '~/composables/useFavorites'
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 const { items, remove } = useFavorites()
+const { toggleItem, has: inInquiry } = useInquiryList()
 
 useSeoGeo({
   title: t('account.favoritesTitle'),
   description: t('account.favoritesDesc'),
 })
+
+function onAddInquiry(item: FavoriteItem) {
+  toggleItem({
+    id: item.id,
+    sku: item.sku,
+    name: item.name,
+    image: item.image,
+    slug: item.slug,
+  })
+}
 </script>
 
 <template>
@@ -34,10 +47,23 @@ useSeoGeo({
             </NuxtLink>
             <p class="product-meta">{{ item.sku }}</p>
           </div>
-          <span />
-          <button class="btn btn-ghost" type="button" style="min-width: auto" @click="remove(item.id)">
-            {{ t('common.remove') }}
-          </button>
+          <div class="inquiry-item-actions">
+            <button
+              class="btn btn-primary"
+              type="button"
+              :aria-pressed="inInquiry(item.id)"
+              @click="onAddInquiry(item)"
+            >
+              {{ inInquiry(item.id) ? t('detail.added') : t('detail.addInquiry') }}
+            </button>
+            <button
+              class="btn btn-ghost"
+              type="button"
+              @click="remove(item.id)"
+            >
+              {{ t('common.remove') }}
+            </button>
+          </div>
         </li>
       </ul>
     </div>

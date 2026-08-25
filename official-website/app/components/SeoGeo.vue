@@ -43,7 +43,6 @@ const breadcrumbs = computed<Crumb[]>(() => {
   const map: Record<string, { name: string; to: string }> = {
     products: { name: t('nav.products'), to: '/products' },
     about: { name: t('nav.about'), to: '/about' },
-    join: { name: t('nav.join'), to: '/join' },
     contact: { name: t('nav.contact'), to: '/contact' },
     inquiry: { name: t('nav.inquiry'), to: '/inquiry' },
     favorites: { name: t('nav.favorites'), to: '/favorites' },

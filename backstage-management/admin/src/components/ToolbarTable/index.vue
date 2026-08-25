@@ -1,5 +1,5 @@
 <template>
-  <div class="toolbar-table">
+  <div class="toolbar-table" :class="{ 'has-footer': innerShowPagination }">
     <div v-if="showToolbarRow" class="toolbar-table__toolbar">
       <div class="toolbar-table__toolbar-start">
         <slot name="toolbar-left" />
@@ -31,7 +31,7 @@
         <el-table
           ref="tableRef"
           v-loading="loading"
-          :data="data"
+          :data="displayData"
           class="toolbar-table__table"
           v-bind="tableBindProps"
           @selection-change="onSelectionChange"
@@ -197,24 +197,39 @@
           </el-table-column>
         </el-table>
       </div>
+    </div>
 
-      <div v-if="innerShowPagination" class="toolbar-table__footer">
-        <Pagination
-          :total="paginationTotal"
-          v-model:page="pageModel"
-          v-model:limit="limitModel"
-          v-bind="paginationBindProps"
-          @pagination="handlePagination"
-        />
-      </div>
+    <div v-if="innerShowPagination" class="toolbar-table__footer">
+      <el-pagination
+        v-model:current-page="pageModel"
+        v-model:page-size="limitModel"
+        background
+        :layout="paginationLayout"
+        :page-sizes="paginationPageSizes"
+        :pager-count="paginationPagerCount"
+        :total="paginationTotal"
+        :small="paginationSmall"
+        :hide-on-single-page="false"
+        @size-change="onPageSizeChange"
+        @current-change="onPageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, useSlots, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  useSlots,
+  watch
+} from "vue";
 import RightToolbar from "./RightToolbar.vue";
-import Pagination from "./Pagination.vue";
 import ToolbarButtonGroup from "./ToolbarButtonGroup.vue";
 import type {
   ToolbarButtonItem,
@@ -253,6 +268,8 @@ interface Props {
   toolbarButtonsMoreTrigger?: ToolbarButtonsTrigger;
   defaultShowOverflowTooltip?: boolean;
   paginationShowWhen?: boolean;
+  /** 前端分页：对传入的 data 按页截取 */
+  clientPagination?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -275,7 +292,8 @@ const props = withDefaults(defineProps<Props>(), {
   toolbarButtons: () => [],
   toolbarButtonsMax: 5,
   toolbarButtonsMoreTrigger: "hover",
-  defaultShowOverflowTooltip: true
+  defaultShowOverflowTooltip: true,
+  clientPagination: false
 });
 
 const emit = defineEmits<{
@@ -358,7 +376,21 @@ watch(
   { deep: true }
 );
 
-onMounted(scheduleMeasureActionColumn);
+function relayoutTable() {
+  nextTick(() => tableRef.value?.doLayout?.());
+}
+
+onMounted(() => {
+  scheduleMeasureActionColumn();
+  relayoutTable();
+  window.addEventListener("resize", relayoutTable);
+});
+
+onActivated(relayoutTable);
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", relayoutTable);
+});
 
 const selectionColumn = computed(
   () => props.columns.find(item => item.type === "selection") ?? null
@@ -541,27 +573,99 @@ function toPositiveInt(value: unknown, fallback = 0): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
-const paginationTotal = computed(() => toPositiveInt(props.total, 0));
+const innerPage = ref(toPositiveInt(props.page, 1));
+const innerLimit = ref(toPositiveInt(props.limit, 10) || 10);
 
-const paginationLimit = computed(() => {
-  const fromProp = toPositiveInt(props.limit, 0);
-  return fromProp > 0 ? fromProp : 10;
-});
+watch(
+  () => props.page,
+  value => {
+    innerPage.value = toPositiveInt(value, innerPage.value || 1);
+  }
+);
+
+watch(
+  () => props.limit,
+  value => {
+    const next = toPositiveInt(value, 0);
+    if (next > 0) innerLimit.value = next;
+  }
+);
+
+const paginationLimit = computed(() => innerLimit.value || 10);
 
 const pageModel = computed({
-  get: () => toPositiveInt(props.page, 1),
-  set: (val: number) => emit("update:page", val)
+  get: () => innerPage.value || 1,
+  set: (val: number) => {
+    innerPage.value = toPositiveInt(val, 1);
+    emit("update:page", innerPage.value);
+  }
 });
 
 const limitModel = computed({
   get: () => paginationLimit.value,
-  set: (val: number) => emit("update:limit", val)
+  set: (val: number) => {
+    innerLimit.value = toPositiveInt(val, 10) || 10;
+    emit("update:limit", innerLimit.value);
+  }
 });
 
-const innerShowPagination = computed(() => {
+const sourceData = computed(() => props.data || []);
+
+const innerShowPagination = computed(() => props.showPagination !== false);
+
+const useClientPagination = computed(() => {
+  if (!innerShowPagination.value) return false;
+  if (props.clientPagination) return true;
+  return toPositiveInt(props.total, 0) <= 0;
+});
+
+const paginationTotal = computed(() => {
+  if (useClientPagination.value) return sourceData.value.length;
+  return Math.max(toPositiveInt(props.total, 0), sourceData.value.length);
+});
+
+const shouldSliceLocally = computed(() => {
   if (!props.showPagination) return false;
-  if (props.paginationShowWhen !== undefined) return props.paginationShowWhen;
-  return paginationTotal.value > 0;
+  if (useClientPagination.value) return true;
+  return sourceData.value.length > paginationLimit.value;
+});
+
+const displayData = computed(() => {
+  const rows = sourceData.value;
+  if (!shouldSliceLocally.value) return rows;
+  const start = (pageModel.value - 1) * paginationLimit.value;
+  return rows.slice(start, start + paginationLimit.value);
+});
+
+const paginationPageSizes = computed(
+  () => props.paginationProps?.pageSizes ?? [10, 15, 20, 30, 50]
+);
+
+const paginationLayout = computed(
+  () =>
+    props.paginationProps?.layout ?? "total, sizes, prev, pager, next, jumper"
+);
+
+const paginationPagerCount = computed(
+  () => props.paginationProps?.pagerCount ?? 7
+);
+
+const paginationSmall = computed(() => Boolean(props.paginationProps?.small));
+
+watch(
+  () => [props.data, props.loading, innerShowPagination.value] as const,
+  () => relayoutTable()
+);
+
+watch([paginationTotal, paginationLimit], () => {
+  const maxPage = Math.max(
+    1,
+    Math.ceil(paginationTotal.value / paginationLimit.value) || 1
+  );
+  if (innerPage.value > maxPage) {
+    innerPage.value = maxPage;
+    emit("update:page", innerPage.value);
+  }
 });
 
 const toolbarBindProps = computed(() => {
@@ -576,32 +680,42 @@ const toolbarBindProps = computed(() => {
 
 const tableBindProps = computed(() => {
   const rest = { ...(props.tableProps || {}) };
-  return {
+  const bind: Record<string, any> = {
     border: false,
     ...rest
   };
-});
-
-const paginationBindProps = computed(() => {
-  const {
-    total: _t,
-    page: _p,
-    limit: _l,
-    hideOnSinglePage: _h,
-    ...rest
-  } = props.paginationProps || {};
-  return {
-    hideOnSinglePage: false,
-    ...rest
-  };
+  if (bind.height == null && bind.maxHeight == null) {
+    bind.height = "100%";
+  }
+  return bind;
 });
 
 function handleQueryTable(): void {
   emit("queryTable");
 }
 
-function handlePagination(params: { page: number; limit: number }): void {
-  emit("pagination", params);
+function emitPagination() {
+  emit("pagination", { page: innerPage.value, limit: innerLimit.value });
+}
+
+function onPageChange(page: number) {
+  innerPage.value = toPositiveInt(page, 1);
+  emit("update:page", innerPage.value);
+  emitPagination();
+}
+
+function onPageSizeChange(size: number) {
+  innerLimit.value = toPositiveInt(size, 10) || 10;
+  emit("update:limit", innerLimit.value);
+  const maxPage = Math.max(
+    1,
+    Math.ceil(paginationTotal.value / innerLimit.value) || 1
+  );
+  if (innerPage.value > maxPage) {
+    innerPage.value = 1;
+    emit("update:page", innerPage.value);
+  }
+  emitPagination();
 }
 
 function onSelectionChange(selection: any[]): void {
@@ -640,11 +754,17 @@ $toolbar-table-cell-padding-x: 16px;
 $toolbar-table-cell-padding-y: 10px;
 
 .toolbar-table {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .toolbar-table__toolbar {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
@@ -670,8 +790,10 @@ $toolbar-table-cell-padding-y: 10px;
 
 .toolbar-table__body {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  overflow: visible;
+  min-height: 0;
+  overflow: hidden;
 
   &.is-panel {
     position: relative;
@@ -691,7 +813,7 @@ $toolbar-table-cell-padding-y: 10px;
     .toolbar-table__shell {
       border: none;
       border-radius: 0;
-      overflow: visible;
+      overflow: hidden;
       box-shadow: none;
 
       &::after {
@@ -703,11 +825,12 @@ $toolbar-table-cell-padding-y: 10px;
 
 .toolbar-table__shell {
   position: relative;
+  flex: 1;
+  min-height: 0;
   border: none;
   border-radius: $toolbar-table-radius;
   background: var(--el-bg-color);
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: hidden;
 
   &::after {
     content: "";
@@ -720,47 +843,43 @@ $toolbar-table-cell-padding-y: 10px;
   }
 }
 
-.toolbar-table__body.has-footer:not(.is-panel) {
-  .toolbar-table__shell {
+.toolbar-table.has-footer .toolbar-table__shell {
+  border-radius: $toolbar-table-radius $toolbar-table-radius 0 0;
+
+  &::after {
+    border-bottom: none;
     border-radius: $toolbar-table-radius $toolbar-table-radius 0 0;
-
-    &::after {
-      border-bottom: none;
-      border-radius: $toolbar-table-radius $toolbar-table-radius 0 0;
-    }
-  }
-
-  .toolbar-table__footer {
-    position: relative;
-    background: var(--el-bg-color);
-    border: none;
-    border-radius: 0 0 $toolbar-table-radius $toolbar-table-radius;
-    padding: 12px 16px;
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border: 1px solid $toolbar-table-border-color;
-      border-top: none;
-      border-radius: inherit;
-      pointer-events: none;
-      z-index: 3;
-    }
   }
 }
 
-.toolbar-table__body.is-panel.has-footer .toolbar-table__footer {
-  padding: 12px 16px 0;
-  background: var(--el-bg-color);
+.toolbar-table.has-footer .toolbar-table__body.is-panel .toolbar-table__shell {
+  border-radius: 0;
 }
 
 .toolbar-table__footer {
+  box-sizing: border-box;
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 52px;
+  padding: 8px 16px;
+  background: var(--el-bg-color);
+  border: 1px solid $toolbar-table-border-color;
+  border-top: none;
+  border-radius: 0 0 $toolbar-table-radius $toolbar-table-radius;
+  z-index: 6;
+
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
+  }
 }
 
 .toolbar-table__table {
   width: 100%;
+  height: 100%;
   --el-table-border-color: #{$toolbar-table-row-border-color};
   --el-table-header-bg-color: #{$toolbar-table-header-bg};
   --el-table-row-hover-bg-color: var(--el-color-primary-light-9);
@@ -854,12 +973,6 @@ $toolbar-table-cell-padding-y: 10px;
       border-right: none !important;
     }
   }
-}
-
-.toolbar-table__body :deep(.toolbar-table-pagination) {
-  padding: 0;
-  margin-top: 0;
-  background: inherit;
 }
 
 :deep(td.col-actions .cell) {

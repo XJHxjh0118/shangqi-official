@@ -191,7 +191,7 @@ onMounted(fetchList);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <p class="page-hint">
         配置官网首页底部展示的适配车型。点击后会带上该车型条件进入产品列表筛选。
@@ -200,7 +200,7 @@ onMounted(fetchList);
         :columns="tableColumns"
         :data="list"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-cms-vehicle-columns' }"
         @query-table="fetchList"

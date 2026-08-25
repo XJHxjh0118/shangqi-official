@@ -13,7 +13,6 @@ const activeId = ref(props.items[0]?.id || '')
 const progress = ref(0)
 const locking = ref(false)
 let lockTimer: ReturnType<typeof setTimeout> | null = null
-let io: IntersectionObserver | null = null
 
 const onHero = computed(() => activeId.value === 'home-hero')
 
@@ -36,38 +35,33 @@ function go(id: string) {
   }, 1200)
 }
 
-function observeItems() {
-  io?.disconnect()
-  io = new IntersectionObserver(
-    (entries) => {
-      if (locking.value) return
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
-      const top = visible[0]?.target.id
-      if (top) activeId.value = top
-    },
-    {
-      rootMargin: '-28% 0px -52% 0px',
-      threshold: [0.1, 0.25, 0.5],
-    },
-  )
-
+function pickActive() {
+  if (locking.value) return
+  const line = window.innerHeight * 0.35
+  let current = props.items[0]?.id || ''
   for (const item of props.items) {
     const el = document.getElementById(item.id)
-    if (el) io.observe(el)
+    if (!el) continue
+    const rect = el.getBoundingClientRect()
+    if (rect.top <= line && rect.bottom > line) current = item.id
   }
+  if (current) activeId.value = current
+}
+
+function onScroll() {
+  updateProgress()
+  pickActive()
 }
 
 onMounted(() => {
-  updateProgress()
-  window.addEventListener('scroll', updateProgress, { passive: true })
-  observeItems()
+  onScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', updateProgress)
-  io?.disconnect()
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onScroll)
   if (lockTimer) clearTimeout(lockTimer)
 })
 
@@ -77,7 +71,7 @@ watch(
     if (!ids.includes(activeId.value)) {
       activeId.value = props.items[0]?.id || ''
     }
-    nextTick(observeItems)
+    nextTick(pickActive)
   },
 )
 </script>

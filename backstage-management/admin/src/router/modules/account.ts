@@ -8,7 +8,7 @@ export default {
   meta: {
     icon: "ep/user",
     title: "用户管理",
-    rank: 6,
+    rank: 7,
     menu: "account"
   },
   children: [

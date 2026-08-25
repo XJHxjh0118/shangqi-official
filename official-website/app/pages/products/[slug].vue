@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PhCaretLeft, PhCaretRight } from '@phosphor-icons/vue'
 import { vehicleLabel } from '~/data/products'
 
 const {
@@ -6,7 +7,9 @@ const {
   locale,
   localePath,
   product,
-  related,
+  relatedProducts,
+  prevProduct,
+  nextProduct,
   name,
   description,
   activeImage,
@@ -20,6 +23,26 @@ const {
   setActiveImage,
   getLocalized,
 } = await useProductDetailPage()
+
+function neighborName(item: NonNullable<typeof prevProduct.value>) {
+  return getLocalized(item.name, locale.value)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  const target = e.target
+  if (target instanceof HTMLElement && target.closest('input, textarea, select')) {
+    return
+  }
+  if (e.key === 'ArrowLeft' && prevProduct.value) {
+    navigateTo(localePath(`/products/${prevProduct.value.slug}`))
+  }
+  if (e.key === 'ArrowRight' && nextProduct.value) {
+    navigateTo(localePath(`/products/${nextProduct.value.slug}`))
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -104,7 +127,12 @@ const {
             </div>
 
             <div class="detail-actions">
-              <button class="btn btn-primary" type="button" @click="onAddInquiry">
+              <button
+                class="btn btn-primary"
+                type="button"
+                :aria-pressed="added"
+                @click="onAddInquiry"
+              >
                 {{ added ? t('detail.added') : t('detail.addInquiry') }}
               </button>
               <button class="btn btn-ghost" type="button" @click="onToggleFavorite">
@@ -150,13 +178,32 @@ const {
           </div>
         </div>
 
-        <section v-if="related.length" class="section" style="padding-bottom: 0">
+        <section v-if="relatedProducts.length" class="detail-related">
           <h2 class="section-title">{{ t('detail.related') }}</h2>
-          <div class="product-grid" style="margin-top: 24px">
-            <ProductCard v-for="p in related" :key="p.id" :product="p" />
+          <div class="product-grid">
+            <ProductCard v-for="p in relatedProducts" :key="p.id" :product="p" />
           </div>
         </section>
       </template>
     </div>
+
+    <NuxtLink
+      v-if="prevProduct"
+      class="detail-pager detail-pager-prev"
+      :to="localePath(`/products/${prevProduct.slug}`)"
+      :aria-label="t('detail.prev', { name: neighborName(prevProduct) })"
+      prefetch
+    >
+      <PhCaretLeft :size="22" weight="regular" />
+    </NuxtLink>
+    <NuxtLink
+      v-if="nextProduct"
+      class="detail-pager detail-pager-next"
+      :to="localePath(`/products/${nextProduct.slug}`)"
+      :aria-label="t('detail.next', { name: neighborName(nextProduct) })"
+      prefetch
+    >
+      <PhCaretRight :size="22" weight="regular" />
+    </NuxtLink>
   </div>
 </template>

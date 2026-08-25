@@ -54,6 +54,12 @@ export function useSiteSettings() {
     return locale.value === 'en' ? s.aboutBodyEn : s.aboutBodyZh
   })
 
+  const contactBody = computed(() => {
+    const s = settings.value
+    if (!s) return ''
+    return locale.value === 'en' ? s.contactBodyEn : s.contactBodyZh
+  })
+
   return {
     settings,
     siteName,
@@ -62,6 +68,7 @@ export function useSiteSettings() {
     footerText,
     aboutTitle,
     aboutBody,
+    contactBody,
   }
 }
 

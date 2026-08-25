@@ -2,9 +2,11 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox, type UploadRequestOptions } from "element-plus";
 import {
+  batchDeleteProducts,
   batchUpdateProducts,
   createProduct,
   deleteProduct,
+  exportProducts,
   getProducts,
   updateProduct
 } from "@/api/product";
@@ -39,6 +41,7 @@ import type {
   SearchFilterTreeOption
 } from "@/components/SearchFilters/types";
 import ProductDetailDrawer from "@/components/ProductDetailDrawer.vue";
+import ProductImportDialog from "@/components/ProductImportDialog.vue";
 
 defineOptions({ name: "ProductList" });
 
@@ -73,6 +76,7 @@ function defaultI18nEntries(): I18nEntry[] {
 }
 
 const loading = ref(false);
+const exporting = ref(false);
 const list = ref<any[]>([]);
 const total = ref(0);
 const categoryTree = ref<any[]>([]);
@@ -107,6 +111,7 @@ const categoryCascaderProps = {
   checkStrictly: true
 };
 const dialogVisible = ref(false);
+const importDialogVisible = ref(false);
 const detailVisible = ref(false);
 const detailId = ref<number | null>(null);
 const editingId = ref<number | null>(null);
@@ -513,7 +518,7 @@ function statusTagType(status: string) {
 const tableColumns = computed<ToolbarTableColumn[]>(() => [
   ...(isDealer.value
     ? []
-    : [{ type: "selection" as const, selectionWidth: 48 }]),
+    : [{ type: "selection" as const, selectionWidth: 48, reserveSelection: true }]),
   { prop: "coverUrl", label: "封面", width: 90, slot: true, toggleable: false },
   { prop: "sku", label: "SKU", minWidth: 140 },
   { prop: "name", label: "名称", minWidth: 160, slot: true },
@@ -931,6 +936,65 @@ async function onBatch(payload: Record<string, unknown>, label: string) {
   fetchList();
 }
 
+async function onBatchDelete() {
+  if (!selectedIds.value.length) {
+    ElMessage.warning("请先勾选产品");
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确认删除已选的 ${selectedIds.value.length} 个产品吗？删除后不可恢复。`,
+      "批量删除",
+      { type: "warning" }
+    );
+  } catch {
+    return;
+  }
+  await batchDeleteProducts(selectedIds.value);
+  selectedIds.value = [];
+  ElMessage.success("已删除");
+  fetchList();
+}
+
+function downloadStamp() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
+async function onExportSelected() {
+  if (!selectedIds.value.length) {
+    ElMessage.warning("请先勾选要导出的产品");
+    return;
+  }
+  exporting.value = true;
+  try {
+    const blob = await exportProducts(selectedIds.value);
+    downloadBlob(
+      blob as Blob,
+      `产品导出_${downloadStamp()}.xlsx`
+    );
+    ElMessage.success(`已导出 ${selectedIds.value.length} 个产品`);
+  } catch (err) {
+    ElMessage.error(errorMessage(err, "导出失败"));
+  } finally {
+    exporting.value = false;
+  }
+}
+
 function handleSearch() {
   query.page = 1;
   fetchList();
@@ -962,7 +1026,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <SearchFilters
         v-model="filters"
@@ -991,11 +1055,18 @@ onMounted(async () => {
         <template #toolbar-left>
           <template v-if="!isDealer">
             <el-button type="success" @click="openCreate">新建产品</el-button>
+            <el-button @click="importDialogVisible = true">导入产品</el-button>
             <el-button @click="onBatch({ status: 'PUBLISHED' }, '已发布')">
               批量发布
             </el-button>
             <el-button @click="onBatch({ status: 'DRAFT' }, '草稿')">
               批量下架
+            </el-button>
+            <el-button type="danger" plain @click="onBatchDelete">
+              批量删除
+            </el-button>
+            <el-button type="primary" :loading="exporting" @click="onExportSelected">
+              导出
             </el-button>
           </template>
         </template>
@@ -1033,6 +1104,10 @@ onMounted(async () => {
     </el-card>
 
     <ProductDetailDrawer v-model="detailVisible" :product-id="detailId" />
+    <ProductImportDialog
+      v-model="importDialogVisible"
+      @imported="fetchList"
+    />
 
     <el-dialog
       v-model="dialogVisible"

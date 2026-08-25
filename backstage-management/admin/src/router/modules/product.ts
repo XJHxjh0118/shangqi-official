@@ -38,15 +38,6 @@ export default {
         title: "车型",
         menu: "product:vehicle"
       }
-    },
-    {
-      path: "/product/import-export",
-      name: "ProductImportExport",
-      component: () => import("@/views/product/import-export.vue"),
-      meta: {
-        title: "产品导入/导出",
-        menu: "product:import-export"
-      }
     }
   ]
 } satisfies RouteConfigsTable;

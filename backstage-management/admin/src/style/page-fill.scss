@@ -1,0 +1,39 @@
+/* 列表页铺满剩余视口：筛选 / 工具栏 / 分页固定，仅表格区域滚动 */
+.page-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+
+.page-fill > .el-card {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page-fill > .el-card.page-fill__static {
+  flex: 0 0 auto;
+}
+
+.page-fill > .el-card > .el-card__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-fill > .el-card > .el-card__header {
+  flex-shrink: 0;
+}
+
+.page-fill .search-filters,
+.page-fill .page-fill__hint,
+.page-fill > .el-alert,
+.page-fill > .el-card > .el-card__body > p {
+  flex-shrink: 0;
+}

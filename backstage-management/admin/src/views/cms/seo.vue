@@ -2,6 +2,8 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getPageSeos, upsertPageSeo } from "@/api/page-seo";
+import { getSiteSettings, updateSiteSettings } from "@/api/site-settings";
+import RichTextEditor from "@/components/RichTextEditor.vue";
 import {
   localeLabel,
   SEO_DESC_MAX,
@@ -27,8 +29,7 @@ const PAGE_CATALOG = [
   { key: "home", title: "首页", path: "/" },
   { key: "about", title: "关于我们", path: "/about" },
   { key: "products", title: "产品中心", path: "/products" },
-  { key: "contact", title: "联系我们", path: "/contact" },
-  { key: "join", title: "加入我们", path: "/join" }
+  { key: "contact", title: "联系我们", path: "/contact" }
 ] as const;
 
 const loading = ref(false);
@@ -45,10 +46,60 @@ const form = reactive({
   descriptionZh: "",
   descriptionEn: ""
 });
+const aboutBodyZh = ref("");
+const aboutBodyEn = ref("");
+const contactBodyZh = ref("");
+const contactBodyEn = ref("");
+const savedAboutBodyZh = ref("");
+const savedAboutBodyEn = ref("");
+const savedContactBodyZh = ref("");
+const savedContactBodyEn = ref("");
 
 const activePage = computed(
   () => PAGE_CATALOG.find(item => item.key === activeKey.value) || PAGE_CATALOG[0]
 );
+const isAboutPage = computed(() => activeKey.value === "about");
+const isContactPage = computed(() => activeKey.value === "contact");
+const hasPageBody = computed(() => isAboutPage.value || isContactPage.value);
+
+const pageBody = computed({
+  get() {
+    if (isAboutPage.value) {
+      return localeTab.value === "en" ? aboutBodyEn.value : aboutBodyZh.value;
+    }
+    if (isContactPage.value) {
+      return localeTab.value === "en" ? contactBodyEn.value : contactBodyZh.value;
+    }
+    return "";
+  },
+  set(value: string) {
+    if (isAboutPage.value) {
+      if (localeTab.value === "en") aboutBodyEn.value = value;
+      else aboutBodyZh.value = value;
+      return;
+    }
+    if (isContactPage.value) {
+      if (localeTab.value === "en") contactBodyEn.value = value;
+      else contactBodyZh.value = value;
+    }
+  }
+});
+
+function normalizeHtml(html: string) {
+  const text = html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text ? html : "";
+}
+
+function toEditorHtml(value: string) {
+  const html = (value || "").trim();
+  if (!html) return "";
+  if (/<\/?[a-z][\s\S]*>/i.test(html)) return html;
+  return `<p>${html.replace(/\n+/g, "</p><p>")}</p>`;
+}
 
 function snapshot() {
   return JSON.stringify({
@@ -57,7 +108,11 @@ function snapshot() {
     keywordsZh: form.keywordsZh.trim(),
     keywordsEn: form.keywordsEn.trim(),
     descriptionZh: form.descriptionZh.trim(),
-    descriptionEn: form.descriptionEn.trim()
+    descriptionEn: form.descriptionEn.trim(),
+    aboutBodyZh: isAboutPage.value ? normalizeHtml(aboutBodyZh.value) : "",
+    aboutBodyEn: isAboutPage.value ? normalizeHtml(aboutBodyEn.value) : "",
+    contactBodyZh: isContactPage.value ? normalizeHtml(contactBodyZh.value) : "",
+    contactBodyEn: isContactPage.value ? normalizeHtml(contactBodyEn.value) : ""
   });
 }
 
@@ -73,12 +128,12 @@ function applyRow(row?: PageSeoRow | null) {
     descriptionZh: row?.descriptionZh || "",
     descriptionEn: row?.descriptionEn || ""
   });
-  savedSnapshot.value = snapshot();
 }
 
 function fillFromKey(pageKey: string) {
   const row = rows.value.find(item => item.pageKey === pageKey);
   applyRow(row);
+  savedSnapshot.value = snapshot();
 }
 
 function truncateText(text: string, max: number) {
@@ -109,8 +164,19 @@ const previewDescription = computed(() => {
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await getPageSeos();
-    rows.value = res.data || [];
+    const [seoRes, settingsRes] = await Promise.all([
+      getPageSeos(),
+      getSiteSettings()
+    ]);
+    rows.value = seoRes.data || [];
+    aboutBodyZh.value = toEditorHtml(settingsRes.data?.aboutBodyZh || "");
+    aboutBodyEn.value = toEditorHtml(settingsRes.data?.aboutBodyEn || "");
+    contactBodyZh.value = toEditorHtml(settingsRes.data?.contactBodyZh || "");
+    contactBodyEn.value = toEditorHtml(settingsRes.data?.contactBodyEn || "");
+    savedAboutBodyZh.value = aboutBodyZh.value;
+    savedAboutBodyEn.value = aboutBodyEn.value;
+    savedContactBodyZh.value = contactBodyZh.value;
+    savedContactBodyEn.value = contactBodyEn.value;
     fillFromKey(activeKey.value);
   } finally {
     loading.value = false;
@@ -130,6 +196,10 @@ async function selectPage(pageKey: (typeof PAGE_CATALOG)[number]["key"]) {
       return;
     }
   }
+  aboutBodyZh.value = savedAboutBodyZh.value;
+  aboutBodyEn.value = savedAboutBodyEn.value;
+  contactBodyZh.value = savedContactBodyZh.value;
+  contactBodyEn.value = savedContactBodyEn.value;
   activeKey.value = pageKey;
   localeTab.value = "zh";
   fillFromKey(pageKey);
@@ -148,6 +218,30 @@ async function save() {
       descriptionEn: form.descriptionEn.trim()
     };
     await upsertPageSeo(payload);
+    if (isAboutPage.value) {
+      const nextAboutZh = normalizeHtml(aboutBodyZh.value);
+      const nextAboutEn = normalizeHtml(aboutBodyEn.value);
+      await updateSiteSettings({
+        aboutBodyZh: nextAboutZh,
+        aboutBodyEn: nextAboutEn
+      });
+      aboutBodyZh.value = nextAboutZh;
+      aboutBodyEn.value = nextAboutEn;
+      savedAboutBodyZh.value = nextAboutZh;
+      savedAboutBodyEn.value = nextAboutEn;
+    }
+    if (isContactPage.value) {
+      const nextContactZh = normalizeHtml(contactBodyZh.value);
+      const nextContactEn = normalizeHtml(contactBodyEn.value);
+      await updateSiteSettings({
+        contactBodyZh: nextContactZh,
+        contactBodyEn: nextContactEn
+      });
+      contactBodyZh.value = nextContactZh;
+      contactBodyEn.value = nextContactEn;
+      savedContactBodyZh.value = nextContactZh;
+      savedContactBodyEn.value = nextContactEn;
+    }
     const index = rows.value.findIndex(item => item.pageKey === activeKey.value);
     if (index >= 0) {
       rows.value[index] = { ...rows.value[index], ...payload };
@@ -165,7 +259,7 @@ onMounted(fetchList);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card v-loading="loading" shadow="never" class="seo-card">
       <div class="seo-layout">
         <aside class="seo-nav">
@@ -237,6 +331,22 @@ onMounted(fetchList);
               </el-form>
             </el-tab-pane>
           </el-tabs>
+
+          <div v-if="hasPageBody" class="about-body-editor">
+            <div class="about-body-editor__head">
+              <strong>{{ localeTab === "en" ? "英文正文" : "中文正文" }}</strong>
+              <span>展示在{{ activePage.title }}页面，支持文字样式、图片和超链接</span>
+            </div>
+            <RichTextEditor
+              :key="`${activeKey}-${localeTab}`"
+              v-model="pageBody"
+              :placeholder="
+                localeTab === 'en'
+                  ? `Enter the English body for ${activePage.title}`
+                  : `请输入${activePage.title}的中文正文`
+              "
+            />
+          </div>
         </section>
       </div>
     </el-card>
@@ -251,13 +361,15 @@ onMounted(fetchList);
 .seo-layout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  min-height: 560px;
+  height: 100%;
+  min-height: 0;
 }
 
 .seo-nav {
   padding: 16px 12px;
   border-right: 1px solid var(--el-border-color-lighter);
   background: var(--el-fill-color-blank);
+  overflow: auto;
 }
 
 .seo-nav-title {
@@ -310,7 +422,9 @@ onMounted(fetchList);
 }
 
 .seo-editor {
+  min-height: 0;
   padding: 20px 24px 24px;
+  overflow: auto;
 }
 
 .seo-editor-head {
@@ -371,6 +485,28 @@ onMounted(fetchList);
 
 .seo-tabs :deep(.el-tabs__header) {
   margin-bottom: 12px;
+}
+
+.about-body-editor {
+  margin-top: 8px;
+}
+
+.about-body-editor__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.about-body-editor__head strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.about-body-editor__head span {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 @media (max-width: 900px) {

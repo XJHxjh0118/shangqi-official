@@ -25,6 +25,8 @@ export type ApiSiteSettings = {
   aboutTitleEn?: string | null
   aboutBodyZh?: string | null
   aboutBodyEn?: string | null
+  contactBodyZh?: string | null
+  contactBodyEn?: string | null
 }
 
 export type ApiI18nContent = {

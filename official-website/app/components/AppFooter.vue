@@ -21,7 +21,7 @@ const geoAreas = computed(() =>
         <nav>
           <NuxtLink :to="localePath('/products')">{{ t('nav.products') }}</NuxtLink>
           <NuxtLink :to="localePath('/about')">{{ t('nav.about') }}</NuxtLink>
-          <NuxtLink :to="localePath('/join')">{{ t('nav.join') }}</NuxtLink>
+          <NuxtLink :to="localePath('/contact')">{{ t('nav.contact') }}</NuxtLink>
         </nav>
         <nav>
           <NuxtLink :to="localePath('/inquiry')">{{ t('nav.inquiry') }}</NuxtLink>

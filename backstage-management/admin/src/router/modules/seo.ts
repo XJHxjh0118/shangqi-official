@@ -8,7 +8,7 @@ export default {
   meta: {
     icon: "ep/search",
     title: "页面SEO配置",
-    rank: 5,
+    rank: 6,
     menu: "seo"
   },
   children: [

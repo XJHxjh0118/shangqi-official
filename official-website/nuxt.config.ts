@@ -77,6 +77,8 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       meta: [
         { name: 'format-detection', content: 'telephone=no' },
+        { name: 'theme-color', content: '#0B0D11' },
+        { name: 'color-scheme', content: 'dark' },
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
@@ -99,7 +101,6 @@ export default defineNuxtConfig({
           'zh/inquiry.json',
           'zh/contact.json',
           'zh/about.json',
-          'zh/join.json',
           'zh/auth.json',
           'zh/account.json',
         ],
@@ -116,7 +117,6 @@ export default defineNuxtConfig({
           'en/inquiry.json',
           'en/contact.json',
           'en/about.json',
-          'en/join.json',
           'en/auth.json',
           'en/account.json',
         ],
@@ -194,6 +194,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/join': { redirect: { to: '/contact', statusCode: 301 } },
+    '/en/join': { redirect: { to: '/en/contact', statusCode: 301 } },
     '/car/**': { proxy: `${devApiOrigin}/car/**` },
     '/uploads/**': { proxy: `${devApiOrigin}/uploads/**` },
     '/**': {

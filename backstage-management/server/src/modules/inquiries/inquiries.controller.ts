@@ -7,16 +7,12 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Menus } from '../../common/decorators/menus.decorator';
+import { HandleLeadDto, type LeadHandler } from '../../common/dto/handle-lead.dto';
+import { StatusPaginationDto } from '../../common/dto/pagination.dto';
 import { InquiriesService } from './inquiries.service';
-
-class UpdateInquiryStatusDto {
-  @ApiProperty()
-  @IsString()
-  status: string;
-}
 
 @ApiTags('Inquiries')
 @ApiBearerAuth()
@@ -25,20 +21,24 @@ export class InquiriesController {
   constructor(private readonly inquiriesService: InquiriesService) {}
 
   @Get('list')
-  findAll(@Query() query: PaginationDto) {
+  @Menus('lead:inquiry')
+  findAll(@Query() query: StatusPaginationDto) {
     return this.inquiriesService.findAll(query);
   }
 
   @Get('detail/:id')
+  @Menus('lead:inquiry')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.inquiriesService.findOne(id);
   }
 
-  @Patch('status/:id')
-  updateStatus(
+  @Patch('handle/:id')
+  @Menus('lead:inquiry')
+  handle(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateInquiryStatusDto,
+    @Body() dto: HandleLeadDto,
+    @CurrentUser() user: LeadHandler,
   ) {
-    return this.inquiriesService.updateStatus(id, dto.status);
+    return this.inquiriesService.handle(id, dto, user);
   }
 }

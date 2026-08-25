@@ -13,8 +13,8 @@ const RESOURCE_RULES: Array<{ test: (path: string) => boolean; label: string }> 
     { test: (p) => p.includes('/roles'), label: '角色' },
     { test: (p) => p.includes('/shares'), label: '分享链接' },
     { test: (p) => p.includes('/site-settings'), label: '站点配置' },
-    { test: (p) => p.includes('/inquiries'), label: '询盘' },
-    { test: (p) => p.includes('/messages'), label: '留言' },
+    { test: (p) => p.includes('/inquiry'), label: '询盘' },
+    { test: (p) => p.includes('/message'), label: '留言' },
     { test: (p) => p.includes('/contacts'), label: '联系人' },
   ];
 
@@ -39,6 +39,7 @@ export const OPERATION_ACTIONS = [
   '导出',
   '排序',
   '批量修改',
+  '批量删除',
   '审核通过',
   '审核拒绝',
   '重置密码',
@@ -68,6 +69,7 @@ export function actionOf(method: string, path: string): OperationAction | string
   if (pathname.includes('/reject')) return '审核拒绝';
   if (pathname.includes('/reset-password')) return '重置密码';
   if (/\/status(\/|$)/.test(pathname)) return '更新状态';
+  if (pathname.includes('/batch') && verb === 'DELETE') return '批量删除';
   if (pathname.includes('/batch')) return '批量修改';
   if (pathname.includes('/children-sort') || /\/sort(\/|$)/.test(pathname)) {
     return '排序';

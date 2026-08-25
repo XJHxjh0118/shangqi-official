@@ -1,6 +1,7 @@
 ﻿import { AssetType, PrismaClient, ProductStatus } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 import { generateSeedAssets, type ProductAssetSpec } from './seed-assets'
+import { EXTRA_PRODUCTS, EXTRA_PRODUCT_PHOTOS } from './seed-extra-products'
 
 const prisma = new PrismaClient()
 
@@ -312,6 +313,12 @@ const PRODUCTS: DemoProduct[] = [
   },
 ]
 
+const ALL_PRODUCTS: DemoProduct[] = [...PRODUCTS, ...EXTRA_PRODUCTS]
+const ALL_PHOTOS: Record<string, string[]> = {
+  ...PRODUCT_PHOTOS,
+  ...EXTRA_PRODUCT_PHOTOS,
+}
+
 async function wipeDemoCatalog() {
   await prisma.inquiryItem.deleteMany()
   await prisma.inquiry.deleteMany()
@@ -416,7 +423,7 @@ async function main() {
       accent: v.accent,
       photo: VEHICLE_PHOTOS[v.code],
     })),
-    PRODUCTS.map((p) => ({ ...p, photos: PRODUCT_PHOTOS[p.sku] })),
+    ALL_PRODUCTS.map((p) => ({ ...p, photos: ALL_PHOTOS[p.sku] })),
   )
 
   await wipeDemoCatalog()
@@ -444,6 +451,10 @@ async function main() {
         '上汽经创为全球经销商提供上汽系车型（MG、荣威、智己、大通、飞凡）原厂附件与装车配件。\n\n目录按座舱、后备厢、外观与新能源划分，每款产品标注适配年款、安装等级，并配有产品视频、安装视频、说明书 PDF 与经销商素材包，便于选型、询盘与到店施工。',
       aboutBodyEn:
         'SAIC Venture supplies OEM accessories for MG, Roewe, IM, Maxus and Rising to dealers worldwide.\n\nThe catalog is grouped by cabin, cargo, exterior and EV kits. Each item lists fitment years and install level, with product film, install film, PDF and a dealer asset pack.',
+      contactBodyZh:
+        '欢迎按区域联系上汽附件对接人。也可在本页留下车型、配件与数量需求，我们会尽快回复。',
+      contactBodyEn:
+        'Reach a regional SAIC accessory desk, or leave vehicle, part and quantity details on this page. We will follow up shortly.',
     },
     create: {
       id: 1,
@@ -464,6 +475,8 @@ async function main() {
       aboutTitleEn: 'About SAIC Venture',
       aboutBodyZh: '上汽经创为全球经销商提供上汽系车型原厂附件与装车配件。',
       aboutBodyEn: 'SAIC Venture supplies OEM accessories for SAIC vehicles to dealers worldwide.',
+      contactBodyZh: '按区域联系上汽附件对接人，或留下车型与配件需求。',
+      contactBodyEn: 'Find a regional SAIC accessory contact or leave a vehicle and parts request.',
     },
   })
 
@@ -510,10 +523,11 @@ async function main() {
   }
 
   const createdProducts: Array<{ id: number; sku: string }> = []
-  for (const [i, p] of PRODUCTS.entries()) {
+  for (const [i, p] of ALL_PRODUCTS.entries()) {
     const files = assets.products[p.sku]
     if (!files) throw new Error(`missing assets for ${p.sku}`)
     const categoryId = leaves[p.category as keyof typeof leaves].id
+    const withMedia = Boolean(files.promo)
     const product = await prisma.product.create({
       data: {
         sku: p.sku,
@@ -527,11 +541,15 @@ async function main() {
         installLevel: p.installLevel,
         coverUrl: files.cover,
         coverName: `${p.sku}-cover.jpg`,
-        promoVideoUrl: files.promo,
-        promoVideoName: `${p.sku}-promo.mp4`,
-        installVideoUrl: files.install,
-        installVideoName: `${p.sku}-install.mp4`,
-        assetPackUrl: files.zip,
+        ...(withMedia
+          ? {
+              promoVideoUrl: files.promo,
+              promoVideoName: `${p.sku}-promo.mp4`,
+              installVideoUrl: files.install,
+              installVideoName: `${p.sku}-install.mp4`,
+              assetPackUrl: files.zip,
+            }
+          : {}),
         i18n: {
           create: [
             {
@@ -561,28 +579,32 @@ async function main() {
         vehicles: {
           create: p.vehicles.map((code) => ({ vehicleId: vehicleRows[code].id })),
         },
-        assets: {
-          create: [
-            ...files.gallery.map((imageUrl, idx) => ({
-              type: AssetType.IMAGE,
-              url: imageUrl,
-              name: `${p.sku}-${idx === 0 ? 'cover' : 'detail'}.jpg`,
-              sort: idx,
-            })),
-            {
-              type: AssetType.PDF,
-              url: files.pdf,
-              name: `${p.sku}-install-guide.pdf`,
-              sort: 10,
-            },
-            {
-              type: AssetType.OTHER,
-              url: files.zip,
-              name: `${p.sku}-asset-pack.zip`,
-              sort: 20,
-            },
-          ],
-        },
+        ...(withMedia
+          ? {
+              assets: {
+                create: [
+                  ...files.gallery.map((imageUrl, idx) => ({
+                    type: AssetType.IMAGE,
+                    url: imageUrl,
+                    name: `${p.sku}-${idx === 0 ? 'cover' : 'detail'}.jpg`,
+                    sort: idx,
+                  })),
+                  {
+                    type: AssetType.PDF,
+                    url: files.pdf,
+                    name: `${p.sku}-install-guide.pdf`,
+                    sort: 10,
+                  },
+                  {
+                    type: AssetType.OTHER,
+                    url: files.zip,
+                    name: `${p.sku}-asset-pack.zip`,
+                    sort: 20,
+                  },
+                ],
+              },
+            }
+          : {}),
       },
     })
     createdProducts.push({ id: product.id, sku: product.sku })
@@ -706,15 +728,6 @@ async function main() {
       keywordsEn: 'dealer desk,parts inquiry',
       descriptionZh: '按区域联系上汽附件对接人。',
       descriptionEn: 'Reach a regional SAIC accessory contact.',
-    },
-    {
-      pageKey: 'join',
-      titleZh: '加入我们 | 附件与海外运营',
-      titleEn: 'Careers | Accessory and overseas ops',
-      keywordsZh: '产品适配工程师,经销商运营',
-      keywordsEn: 'fitment engineer,dealer operations',
-      descriptionZh: '招聘车型适配、海外经销商运营与附件开发岗位。',
-      descriptionEn: 'Hiring for vehicle fitment, overseas dealer ops and accessory development.',
     },
   ]
   for (const page of pageSeos) {

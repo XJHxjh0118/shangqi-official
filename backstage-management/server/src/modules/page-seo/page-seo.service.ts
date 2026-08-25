@@ -7,7 +7,6 @@ const DEFAULT_PAGES = [
   { pageKey: 'about', titleZh: '关于我们', titleEn: 'About' },
   { pageKey: 'products', titleZh: '产品中心', titleEn: 'Products' },
   { pageKey: 'contact', titleZh: '联系我们', titleEn: 'Contact' },
-  { pageKey: 'join', titleZh: '加入我们', titleEn: 'Join Us' },
 ];
 
 @Injectable()
@@ -44,5 +43,6 @@ export class PageSeoService {
         }),
       ),
     );
+    await this.prisma.pageSeo.deleteMany({ where: { pageKey: 'join' } });
   }
 }

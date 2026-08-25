@@ -54,7 +54,7 @@ export class RolesService implements OnModuleInit {
       {
         code: SYSTEM_ROLE.EDITOR,
         name: '运营',
-        description: '产品分类、产品、首页内容、SEO',
+        description: '产品分类、产品、内容管理、留言管理、SEO',
         menus: EDITOR_MENUS,
         isSystem: true,
         sort: 2,
@@ -89,11 +89,23 @@ export class RolesService implements OnModuleInit {
       }
       const nextMenus = parseMenus(exists.menus);
       const data: Record<string, unknown> = {};
-      if (
-        item.code === SYSTEM_ROLE.EDITOR &&
-        !nextMenus.includes('cms:vehicle')
-      ) {
-        data.menus = JSON.stringify([...nextMenus, 'cms:vehicle']);
+      if (item.code === SYSTEM_ROLE.ADMIN) {
+        if (JSON.stringify(item.menus) !== exists.menus) {
+          data.menus = JSON.stringify(item.menus);
+        }
+      } else if (item.code === SYSTEM_ROLE.EDITOR) {
+        const merged = [
+          ...new Set([
+            ...nextMenus,
+            'cms:vehicle',
+            'lead',
+            'lead:message',
+            'lead:inquiry',
+          ]),
+        ];
+        if (JSON.stringify(merged) !== exists.menus) {
+          data.menus = JSON.stringify(merged);
+        }
       } else if (JSON.stringify(nextMenus) !== exists.menus) {
         data.menus = JSON.stringify(nextMenus);
       }

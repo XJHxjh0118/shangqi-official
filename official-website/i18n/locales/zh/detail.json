@@ -8,13 +8,15 @@
     "vehicles": "适配车型",
     "promoVideo": "产品视频",
     "installVideo": "安装视频",
-    "pdf": "安装说明 PDF",
+    "pdf": "安装说明",
     "assets": "素材下载",
     "downloadPack": "下载素材包",
     "addInquiry": "加入询盘",
     "added": "已加入询盘",
     "favorite": "收藏",
     "favorited": "已收藏",
-    "related": "相关产品"
+    "related": "相关产品",
+    "prev": "上一件：{name}",
+    "next": "下一件：{name}"
   }
 }

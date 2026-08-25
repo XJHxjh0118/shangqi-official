@@ -38,7 +38,7 @@ const props = withDefaults(
     pageSizes: () => [10, 20, 30, 50],
     pagerCount: 7,
     layout: "total, sizes, prev, pager, next, jumper",
-    background: false,
+    background: true,
     small: false,
     hidden: false,
     hideOnSinglePage: false

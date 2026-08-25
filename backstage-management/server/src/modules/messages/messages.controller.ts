@@ -7,16 +7,12 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Menus } from '../../common/decorators/menus.decorator';
+import { HandleLeadDto, type LeadHandler } from '../../common/dto/handle-lead.dto';
+import { StatusPaginationDto } from '../../common/dto/pagination.dto';
 import { MessagesService } from './messages.service';
-
-class UpdateMessageStatusDto {
-  @ApiProperty()
-  @IsString()
-  status: string;
-}
 
 @ApiTags('Messages')
 @ApiBearerAuth()
@@ -25,20 +21,24 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Get('list')
-  findAll(@Query() query: PaginationDto) {
+  @Menus('lead:message')
+  findAll(@Query() query: StatusPaginationDto) {
     return this.messagesService.findAll(query);
   }
 
   @Get('detail/:id')
+  @Menus('lead:message')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.messagesService.findOne(id);
   }
 
-  @Patch('status/:id')
-  updateStatus(
+  @Patch('handle/:id')
+  @Menus('lead:message')
+  handle(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateMessageStatusDto,
+    @Body() dto: HandleLeadDto,
+    @CurrentUser() user: LeadHandler,
   ) {
-    return this.messagesService.updateStatus(id, dto.status);
+    return this.messagesService.handle(id, dto, user);
   }
 }

@@ -8,7 +8,7 @@ export const getInquiries = (params?: object) =>
 export const getInquiry = (id: number) =>
   http.request<Result>("get", `/inquiry/detail/${id}`);
 
-export const updateInquiryStatus = (id: number, status: string) =>
-  http.request<Result>("patch", `/inquiry/status/${id}`, {
-    data: { status }
-  });
+export const handleInquiry = (
+  id: number,
+  data: { handleMethod: string; handleResult: string; handleRemark: string }
+) => http.request<Result>("patch", `/inquiry/handle/${id}`, { data });

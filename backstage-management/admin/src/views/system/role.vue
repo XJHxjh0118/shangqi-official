@@ -162,7 +162,7 @@ onMounted(fetchList);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <p class="mb-4 text-sm text-gray-500">
         配置后台角色及其可访问的菜单。系统内置角色不可删除。
@@ -171,7 +171,7 @@ onMounted(fetchList);
         :columns="tableColumns"
         :data="list"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-system-role-columns' }"
         @query-table="fetchList"

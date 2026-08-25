@@ -24,16 +24,18 @@ useSeoGeo({
 </script>
 
 <template>
-  <div class="page">
-    <div class="container">
-      <p class="product-meta">{{ statusCode }}</p>
-      <h1 class="page-head" style="padding-top: 8px">{{ pageTitle }}</h1>
-      <p>{{ pageDesc }}</p>
-      <p style="margin-top: 24px">
-        <NuxtLink class="btn btn-primary" :to="localePath('/')">
-          {{ t('common.backHome') }}
-        </NuxtLink>
-      </p>
+  <div class="site-shell">
+    <div class="page">
+      <div class="container">
+        <p class="product-meta">{{ statusCode }}</p>
+        <h1 class="page-head" style="padding-top: 8px">{{ pageTitle }}</h1>
+        <p>{{ pageDesc }}</p>
+        <p style="margin-top: 24px">
+          <NuxtLink class="btn btn-primary" :to="localePath('/')">
+            {{ t('common.backHome') }}
+          </NuxtLink>
+        </p>
+      </div>
     </div>
   </div>
 </template>

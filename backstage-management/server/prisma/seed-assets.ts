@@ -28,6 +28,7 @@ export type ProductAssetSpec = {
   vehicleLabel: string
   accent: string
   photos?: string[]
+  coverOnly?: boolean
 }
 
 export type GeneratedProductFiles = {
@@ -413,6 +414,17 @@ export async function generateSeedAssets(
       1400,
       1050,
     )
+    if (spec.coverOnly) {
+      productFiles[spec.sku] = {
+        cover,
+        gallery: [cover],
+        promo: '',
+        install: '',
+        pdf: '',
+        zip: '',
+      }
+      continue
+    }
     const detail = await writePhoto(
       detailRel,
       spec.photos?.[1] || spec.photos?.[0],
@@ -446,4 +458,17 @@ export async function generateSeedAssets(
   }
 
   return { logo, favicon, banners, vehicles: vehicleUrls, products: productFiles }
+}
+
+export async function generateCoverOnly(spec: ProductAssetSpec) {
+  mkdirSync(ROOT, { recursive: true })
+  const dir = `products/${spec.slug}`
+  const coverRel = `${dir}/cover.jpg`
+  return writePhoto(
+    coverRel,
+    spec.photos?.[0],
+    productSvg(spec, 'cover'),
+    1400,
+    1050,
+  )
 }

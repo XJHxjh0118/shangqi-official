@@ -167,13 +167,13 @@ onMounted(fetchList);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <ToolbarTable
         :columns="tableColumns"
         :data="list"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-product-vehicle-columns' }"
         @query-table="fetchList"

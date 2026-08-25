@@ -5,7 +5,7 @@ import { cleanInput, normalizeSubmitError } from '~/utils/form'
 export function useInquiryPage() {
   const { t } = useI18n()
   const localePath = useLocalePath()
-  const { items, updateQty, removeItem, clear } = useInquiryList()
+  const { items, updateQty, removeItem, clear, count } = useInquiryList()
   const { createInquiry } = useApi()
   const { profile } = useAuth()
 
@@ -114,6 +114,7 @@ export function useInquiryPage() {
     t,
     localePath,
     items,
+    count,
     updateQty,
     removeItem,
     formRef,

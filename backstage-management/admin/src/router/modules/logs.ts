@@ -8,7 +8,7 @@ export default {
   meta: {
     icon: "ep/document",
     title: "操作日志",
-    rank: 7,
+    rank: 8,
     menu: "logs"
   },
   children: [

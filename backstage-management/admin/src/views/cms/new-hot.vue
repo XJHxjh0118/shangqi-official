@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
-import { ElMessage } from "element-plus";
-import { getProducts, updateProduct } from "@/api/product";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { batchUpdateProducts, getProducts, updateProduct } from "@/api/product";
 import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
@@ -20,6 +20,13 @@ const pickerVisible = ref(false);
 const pickerFilters = ref<Record<string, unknown>>({ keyword: "" });
 const pickerList = ref<any[]>([]);
 const pickerLoading = ref(false);
+const pickerPage = ref(1);
+const pickerPageSize = ref(20);
+const pickerTotal = ref(0);
+const pickerSelected = ref<any[]>([]);
+const selectedIds = ref<number[]>([]);
+const batchLoading = ref(false);
+const removeLoading = ref(false);
 const detailVisible = ref(false);
 const detailId = ref<number | null>(null);
 
@@ -43,6 +50,7 @@ function toDisplayUrl(url?: string | null) {
 }
 
 const tableColumns: ToolbarTableColumn[] = [
+  { type: "selection", selectionWidth: 48 },
   { prop: "coverUrl", label: "缩略图", width: 90, slot: true, toggleable: false },
   { prop: "sku", label: "SKU", width: 140 },
   { prop: "name", label: "名称", minWidth: 160, slot: true },
@@ -50,6 +58,7 @@ const tableColumns: ToolbarTableColumn[] = [
 ];
 
 const pickerColumns: ToolbarTableColumn[] = [
+  { type: "selection", selectionWidth: 48, reserveSelection: true },
   { prop: "sku", label: "SKU", width: 140 },
   { prop: "name", label: "名称", minWidth: 160, slot: true }
 ];
@@ -71,6 +80,8 @@ async function fetchList() {
 async function openPicker() {
   pickerVisible.value = true;
   pickerFilters.value = { keyword: "" };
+  pickerPage.value = 1;
+  pickerSelected.value = [];
   await searchPicker();
 }
 
@@ -78,39 +89,94 @@ async function searchPicker() {
   pickerLoading.value = true;
   try {
     const res = await getProducts({
-      page: 1,
-      pageSize: 50,
+      page: pickerPage.value,
+      pageSize: pickerPageSize.value,
       keyword: (pickerFilters.value.keyword as string) || undefined,
-      status: "PUBLISHED"
+      status: "PUBLISHED",
+      ...(tab.value === "new" ? { isNew: false } : { isHot: false })
     });
-    pickerList.value = (res.data?.list || []).filter((i: any) =>
-      tab.value === "new" ? !i.isNew : !i.isHot
-    );
+    pickerList.value = res.data?.list || [];
+    pickerTotal.value = res.data?.total || 0;
   } finally {
     pickerLoading.value = false;
   }
 }
 
+function handlePickerSearch() {
+  pickerPage.value = 1;
+  searchPicker();
+}
+
+function onPickerSelectionChange(rows: any[]) {
+  pickerSelected.value = rows;
+}
+
+function tagPayload(enabled: boolean) {
+  return tab.value === "new" ? { isNew: enabled } : { isHot: enabled };
+}
+
+function tagLabel() {
+  return tab.value === "new" ? "新品" : "热销";
+}
+
 async function addItem(row: any) {
-  await updateProduct(
-    row.id,
-    tab.value === "new" ? { isNew: true } : { isHot: true }
-  );
-  ElMessage.success(tab.value === "new" ? "已加入新品" : "已加入热销");
-  pickerVisible.value = false;
-  fetchList();
+  await updateProduct(row.id, tagPayload(true));
+  ElMessage.success(`已加入${tagLabel()}`);
+  await Promise.all([searchPicker(), fetchList()]);
+}
+
+async function addSelected() {
+  const ids = pickerSelected.value.map(row => row.id);
+  if (!ids.length) {
+    ElMessage.warning("请先勾选产品");
+    return;
+  }
+  batchLoading.value = true;
+  try {
+    await batchUpdateProducts({ ids, ...tagPayload(true) });
+    ElMessage.success(`已加入 ${ids.length} 个${tagLabel()}产品`);
+    pickerVisible.value = false;
+    fetchList();
+  } finally {
+    batchLoading.value = false;
+  }
 }
 
 async function removeItem(row: any) {
-  await updateProduct(
-    row.id,
-    tab.value === "new" ? { isNew: false } : { isHot: false }
-  );
+  await updateProduct(row.id, tagPayload(false));
   ElMessage.success("已移出");
   fetchList();
 }
 
-watch(tab, fetchList);
+function onSelectionChange(rows: any[]) {
+  selectedIds.value = rows.map(row => row.id);
+}
+
+async function removeSelected() {
+  if (!selectedIds.value.length) {
+    ElMessage.warning("请先勾选产品");
+    return;
+  }
+  await ElMessageBox.confirm(
+    `确认将已选 ${selectedIds.value.length} 个产品移出${tagLabel()}？`,
+    "批量移出",
+    { type: "warning" }
+  );
+  removeLoading.value = true;
+  try {
+    await batchUpdateProducts({ ids: selectedIds.value, ...tagPayload(false) });
+    ElMessage.success(`已移出 ${selectedIds.value.length} 个${tagLabel()}产品`);
+    selectedIds.value = [];
+    fetchList();
+  } finally {
+    removeLoading.value = false;
+  }
+}
+
+watch(tab, () => {
+  selectedIds.value = [];
+  fetchList();
+});
 onMounted(fetchList);
 
 function openDetail(row: any) {
@@ -144,7 +210,7 @@ function onPickerAction(key: string, row: any) {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <el-tabs v-model="tab">
         <el-tab-pane label="新品推荐" name="new" />
@@ -154,14 +220,25 @@ function onPickerAction(key: string, row: any) {
         :columns="tableColumns"
         :data="list"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-cms-new-hot-columns' }"
+        :table-props="{ rowKey: 'id' }"
         @query-table="fetchList"
+        @selection-change="onSelectionChange"
       >
         <template #toolbar-left>
           <el-button type="primary" @click="openPicker">
             {{ tab === "new" ? "添加新品" : "添加热销" }}
+          </el-button>
+          <el-button
+            type="danger"
+            plain
+            :disabled="!selectedIds.length"
+            :loading="removeLoading"
+            @click="removeSelected"
+          >
+            批量移出
           </el-button>
         </template>
         <template #coverUrl="{ row }">
@@ -188,7 +265,12 @@ function onPickerAction(key: string, row: any) {
       </ToolbarTable>
     </el-card>
 
-    <el-dialog v-model="pickerVisible" title="选择已发布产品" width="640px">
+    <el-dialog
+      v-model="pickerVisible"
+      title="选择已发布产品"
+      width="720px"
+      destroy-on-close
+    >
       <SearchFilters
         v-model="pickerFilters"
         :fields="pickerFilterFields"
@@ -196,16 +278,21 @@ function onPickerAction(key: string, row: any) {
         embedded
         :bordered="false"
         :show-label="false"
-        @search="searchPicker"
-        @reset="searchPicker"
+        @search="handlePickerSearch"
+        @reset="handlePickerSearch"
       />
       <ToolbarTable
         :columns="pickerColumns"
         :data="pickerList"
         :loading="pickerLoading"
+        :total="pickerTotal"
+        v-model:page="pickerPage"
+        v-model:limit="pickerPageSize"
         :show-toolbar="false"
-        :show-pagination="false"
-        :table-props="{ height: 360 }"
+        :table-props="{ rowKey: 'id', height: 360 }"
+        :pagination-props="{ layout: 'total, prev, pager, next' }"
+        @pagination="searchPicker"
+        @selection-change="onPickerSelectionChange"
       >
         <template #name="{ row }">
           <el-button link type="primary" @click="openDetail(row)">
@@ -219,8 +306,38 @@ function onPickerAction(key: string, row: any) {
           />
         </template>
       </ToolbarTable>
+      <template #footer>
+        <div class="picker-footer">
+          <span class="picker-count">已选 {{ pickerSelected.length }} 项</span>
+          <div>
+            <el-button @click="pickerVisible = false">取消</el-button>
+            <el-button
+              type="primary"
+              :disabled="!pickerSelected.length"
+              :loading="batchLoading"
+              @click="addSelected"
+            >
+              批量加入
+            </el-button>
+          </div>
+        </div>
+      </template>
     </el-dialog>
 
     <ProductDetailDrawer v-model="detailVisible" :product-id="detailId" />
   </div>
 </template>
+
+<style scoped>
+.picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.picker-count {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+</style>

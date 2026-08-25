@@ -1,18 +1,26 @@
+:root {
+  --el-bg-color-overlay: var(--color-surface);
+  --el-fill-color-light: color-mix(in srgb, var(--color-ink) 12%, var(--color-surface));
+  --el-fill-color-blank: var(--color-surface);
+}
+
 .el-form {
   --el-color-primary: var(--color-accent);
-  --el-color-primary-light-3: color-mix(in srgb, var(--color-accent) 70%, white);
-  --el-color-primary-light-5: color-mix(in srgb, var(--color-accent) 50%, white);
-  --el-color-primary-light-7: color-mix(in srgb, var(--color-accent) 30%, white);
-  --el-color-primary-light-9: color-mix(in srgb, var(--color-accent) 12%, white);
+  --el-color-primary-light-3: color-mix(in srgb, var(--color-accent) 70%, var(--color-canvas));
+  --el-color-primary-light-5: color-mix(in srgb, var(--color-accent) 50%, var(--color-canvas));
+  --el-color-primary-light-7: color-mix(in srgb, var(--color-accent) 30%, var(--color-canvas));
+  --el-color-primary-light-9: color-mix(in srgb, var(--color-accent) 12%, var(--color-canvas));
   --el-color-primary-dark-2: color-mix(in srgb, var(--color-accent) 82%, black);
   --el-border-radius-base: var(--radius-xs);
   --el-font-size-base: 14px;
+  --el-text-color-primary: var(--color-ink);
   --el-text-color-regular: var(--color-ink);
   --el-text-color-placeholder: var(--color-placeholder);
   --el-border-color: var(--color-hairline);
   --el-border-color-hover: var(--color-muted);
   --el-fill-color-blank: var(--color-surface);
   --el-bg-color: var(--color-canvas);
+  --el-bg-color-overlay: var(--color-surface);
 }
 
 .el-input__wrapper,
@@ -23,6 +31,14 @@
   border: 1px solid var(--color-hairline);
   min-height: 40px;
   background: var(--color-surface) !important;
+  color: var(--color-ink);
+}
+
+.el-input__inner,
+.el-textarea__inner,
+.el-select__placeholder,
+.el-select__selected-item {
+  color: var(--color-ink);
 }
 
 .el-input__wrapper.is-focus,
@@ -59,10 +75,89 @@
   --el-checkbox-checked-input-border-color: var(--color-accent);
   --el-checkbox-checked-text-color: var(--color-ink);
   --el-checkbox-input-border-radius: var(--radius-xs);
+  --el-checkbox-bg-color: var(--color-surface);
+  --el-checkbox-input-border: var(--color-hairline);
   height: auto;
 }
 
 .el-checkbox__label {
   color: var(--color-body);
   font-weight: 400;
+}
+
+.el-scrollbar {
+  --el-scrollbar-bg-color: var(--scrollbar-thumb);
+  --el-scrollbar-hover-bg-color: var(--scrollbar-thumb-hover);
+}
+
+.el-scrollbar__bar {
+  border-radius: 0;
+}
+
+.el-scrollbar__bar.is-vertical {
+  width: var(--scrollbar-size);
+  right: 2px;
+}
+
+.el-scrollbar__bar.is-horizontal {
+  height: var(--scrollbar-size);
+  bottom: 2px;
+}
+
+.el-scrollbar__thumb {
+  border-radius: 0;
+  opacity: 1;
+  background-color: var(--scrollbar-thumb);
+}
+
+.el-scrollbar__thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+.el-select-dropdown,
+.el-popper.is-light,
+.el-tooltip__popper,
+.el-picker-panel {
+  --el-bg-color-overlay: var(--color-surface);
+  --el-fill-color-light: color-mix(in srgb, var(--color-ink) 12%, var(--color-surface));
+  --el-fill-color-blank: var(--color-surface);
+  --el-text-color-primary: var(--color-ink);
+  --el-text-color-regular: var(--color-ink);
+  --el-text-color-secondary: var(--color-body);
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-hairline) !important;
+  color: var(--color-ink);
+}
+
+.el-select-dropdown__item {
+  color: var(--color-ink) !important;
+  background-color: transparent;
+}
+
+.el-select-dropdown__item.is-hovering,
+.el-select-dropdown__item.is-selected,
+.el-select-dropdown__item.is-selected.is-hovering,
+.el-select-dropdown__item:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-ink) 12%,
+    var(--color-surface)
+  ) !important;
+  color: var(--color-ink) !important;
+}
+
+.el-overlay,
+.el-overlay-dialog,
+.el-dialog,
+.el-message-box {
+  --el-bg-color: var(--color-surface);
+  --el-text-color-primary: var(--color-ink);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.el-message {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-hairline) !important;
+  color: var(--color-ink) !important;
 }

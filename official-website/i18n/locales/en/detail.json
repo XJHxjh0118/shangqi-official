@@ -8,13 +8,15 @@
     "vehicles": "Compatible vehicles",
     "promoVideo": "Product video",
     "installVideo": "Install video",
-    "pdf": "Install PDF",
+    "pdf": "Install guide",
     "assets": "Assets",
     "downloadPack": "Download pack",
     "addInquiry": "Add to inquiry",
     "added": "Added to inquiry",
     "favorite": "Save",
     "favorited": "Saved",
-    "related": "Related products"
+    "related": "Related products",
+    "prev": "Previous: {name}",
+    "next": "Next: {name}"
   }
 }

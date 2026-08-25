@@ -81,6 +81,8 @@ model SiteSettings {
   aboutTitleEn     String?  @map("about_title_en")
   aboutBodyZh      String?  @map("about_body_zh")
   aboutBodyEn      String?  @map("about_body_en")
+  contactBodyZh    String?  @map("contact_body_zh")
+  contactBodyEn    String?  @map("contact_body_en")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("site_settings")
@@ -224,17 +226,23 @@ model ContactPerson {
 }
 
 model Inquiry {
-  id          Int           @id @default(autoincrement())
-  company     String
-  contactName String        @map("contact_name")
-  email       String
-  phone       String?
-  region      String?
-  message     String?
-  status      String        @default("NEW")
-  items       InquiryItem[]
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id            Int           @id @default(autoincrement())
+  company       String
+  contactName   String        @map("contact_name")
+  email         String
+  phone         String?
+  region        String?
+  message       String?
+  status        String        @default("NEW")
+  handleMethod  String?       @map("handle_method")
+  handleResult  String?       @map("handle_result")
+  handleRemark  String?       @map("handle_remark")
+  handledBy     String?       @map("handled_by")
+  handledById   Int?          @map("handled_by_id")
+  handledAt     DateTime?     @map("handled_at")
+  items         InquiryItem[]
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   @@map("inquiries")
 }
@@ -252,15 +260,21 @@ model InquiryItem {
 }
 
 model ContactMessage {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  company   String?
-  region    String?
-  content   String
-  status    String   @default("NEW")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String
+  company      String?
+  region       String?
+  content      String
+  status       String    @default("NEW")
+  handleMethod String?   @map("handle_method")
+  handleResult String?   @map("handle_result")
+  handleRemark String?   @map("handle_remark")
+  handledBy    String?   @map("handled_by")
+  handledById  Int?      @map("handled_by_id")
+  handledAt    DateTime? @map("handled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@map("contact_messages")
 }

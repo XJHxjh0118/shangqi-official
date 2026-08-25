@@ -8,7 +8,7 @@ export const getMessages = (params?: object) =>
 export const getMessage = (id: number) =>
   http.request<Result>("get", `/message/detail/${id}`);
 
-export const updateMessageStatus = (id: number, status: string) =>
-  http.request<Result>("patch", `/message/status/${id}`, {
-    data: { status }
-  });
+export const handleMessage = (
+  id: number,
+  data: { handleMethod: string; handleResult: string; handleRemark: string }
+) => http.request<Result>("patch", `/message/handle/${id}`, { data });

@@ -19,6 +19,8 @@ export type SiteSettings = {
   aboutTitleEn?: string | null;
   aboutBodyZh?: string | null;
   aboutBodyEn?: string | null;
+  contactBodyZh?: string | null;
+  contactBodyEn?: string | null;
   updatedAt?: string;
 };
 

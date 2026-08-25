@@ -19,7 +19,6 @@ export default defineEventHandler((event) => {
 - [Products](${site}/products)
 - [About](${site}/about)
 - [Contact](${site}/contact)
-- [Careers](${site}/join)
 - [Inquiry](${site}/inquiry)
 
 ## Catalog

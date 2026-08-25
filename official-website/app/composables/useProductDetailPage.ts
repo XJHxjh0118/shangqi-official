@@ -6,9 +6,9 @@ export async function useProductDetailPage() {
   const { t, locale } = useI18n()
   const route = useRoute()
   const localePath = useLocalePath()
-  const { addItem } = useInquiryList()
+  const { toggleItem, has: inInquiry } = useInquiryList()
   const { toggle, has } = useFavorites()
-  const { apiBase, getProductBySlug, productAssetPackUrl } = useApi()
+  const { apiBase, getProductBySlug, getProducts, productAssetPackUrl } = useApi()
 
   const slug = computed(() => String(route.params.slug))
 
@@ -29,6 +29,42 @@ export async function useProductDetailPage() {
   const related = computed(() => {
     if (!raw.value || raw.value.slug !== slug.value) return []
     return (raw.value.related || []).map((p) => mapApiProduct(p, apiBase))
+  })
+
+  const catalogAsync = useCachedAsyncData(
+    'product-detail-nav',
+    () => getProducts({ pageSize: 100 }),
+  )
+
+  const catalogProducts = computed(() =>
+    (catalogAsync.data.value?.list || []).map((p) => mapApiProduct(p, apiBase)),
+  )
+
+  const currentIndex = computed(() =>
+    catalogProducts.value.findIndex((item) => item.slug === slug.value),
+  )
+
+  const prevProduct = computed(() => {
+    const list = catalogProducts.value
+    const index = currentIndex.value
+    if (list.length < 2 || index < 0) return null
+    return list[(index - 1 + list.length) % list.length]
+  })
+
+  const nextProduct = computed(() => {
+    const list = catalogProducts.value
+    const index = currentIndex.value
+    if (list.length < 2 || index < 0) return null
+    return list[(index + 1) % list.length]
+  })
+
+  const relatedProducts = computed(() => {
+    if (related.value.length) return related.value
+    const current = product.value
+    const others = catalogProducts.value.filter((item) => item.slug !== slug.value)
+    if (!current) return others.slice(0, 6)
+    const sameCategory = others.filter((item) => item.category === current.category)
+    return (sameCategory.length ? sameCategory : others).slice(0, 6)
   })
 
   const name = computed(() =>
@@ -57,7 +93,9 @@ export async function useProductDetailPage() {
       : '',
   )
   const activeImage = ref(0)
-  const added = ref(false)
+  const added = computed(() =>
+    product.value ? inInquiry(product.value.id) : false,
+  )
   const activeSrc = computed(
     () =>
       product.value?.images[activeImage.value] ||
@@ -70,7 +108,9 @@ export async function useProductDetailPage() {
 
   watch(slug, () => {
     activeImage.value = 0
-    added.value = false
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
   })
 
   watch([error, raw, pending, slug], () => {
@@ -98,13 +138,13 @@ export async function useProductDetailPage() {
   function onAddInquiry() {
     const p = product.value
     if (!p) return
-    addItem({
+    toggleItem({
       id: p.id,
       sku: p.sku,
       name: name.value,
       image: p.images[0],
+      slug: p.slug,
     })
-    added.value = true
   }
 
   function onToggleFavorite() {
@@ -141,6 +181,9 @@ export async function useProductDetailPage() {
     slug,
     product,
     related,
+    relatedProducts,
+    prevProduct,
+    nextProduct,
     name,
     description,
     activeImage,

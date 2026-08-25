@@ -271,13 +271,13 @@ onBeforeUnmount(destroySortable);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <ToolbarTable
         :columns="tableColumns"
         :data="list"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-cms-banner-columns' }"
         @query-table="fetchList"
@@ -287,6 +287,9 @@ onBeforeUnmount(destroySortable);
           <el-button :disabled="list.length < 2" @click="openSortDialog">
             调整顺序
           </el-button>
+          <span class="banner-hero-hint">
+            启用中的 Banner 按排序出现在官网首页首屏，滚动时依次切换。建议 1920×1080 横图。
+          </span>
         </template>
         <template #imageUrl="{ row }">
           <el-image
@@ -356,7 +359,9 @@ onBeforeUnmount(destroySortable);
                 {{ form.imageUrl ? "重新上传" : "上传图片" }}
               </el-button>
             </el-upload>
-            <p class="upload-tip">支持 jpg / png / webp，单张不超过 10MB</p>
+            <p class="upload-tip">
+              用于官网首页首屏。支持 jpg / png / webp，建议 1920×1080，单张不超过 10MB
+            </p>
           </div>
         </el-form-item>
         <el-form-item label="跳转链接">
@@ -401,7 +406,7 @@ onBeforeUnmount(destroySortable);
       @opened="onSortDialogOpened"
       @closed="onSortDialogClosed"
     >
-      <p class="sort-hint">拖拽左侧手柄调整官网首页展示顺序，保存后生效</p>
+      <p class="sort-hint">拖拽左侧手柄调整官网首页首屏图片顺序，保存后滚动切换生效</p>
       <ul ref="sortListRef" class="banner-sort-list">
         <li
           v-for="(item, index) in sortList"
@@ -463,6 +468,13 @@ onBeforeUnmount(destroySortable);
 
 .upload-tip {
   margin: 0;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.banner-hero-hint {
+  margin-left: 12px;
   color: var(--el-text-color-secondary);
   font-size: 12px;
   line-height: 1.4;

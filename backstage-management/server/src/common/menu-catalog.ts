@@ -13,18 +13,25 @@ export const MENU_CATALOG: MenuNode[] = [
       { key: 'product:category', title: '产品分类' },
       { key: 'product:list', title: '产品列表' },
       { key: 'product:vehicle', title: '车型' },
-      { key: 'product:import-export', title: '产品导入/导出' },
     ],
   },
   {
     key: 'cms',
-    title: '首页内容管理',
+    title: '内容管理',
     children: [
       { key: 'cms:banner', title: 'Banner管理' },
       { key: 'cms:featured', title: '主推推荐' },
       { key: 'cms:new-hot', title: '热门/新品' },
       { key: 'cms:service', title: '服务体系管理' },
       { key: 'cms:vehicle', title: '适配车型管理' },
+    ],
+  },
+  {
+    key: 'lead',
+    title: '留言管理',
+    children: [
+      { key: 'lead:message', title: '联系留言' },
+      { key: 'lead:inquiry', title: '产品询盘' },
     ],
   },
   {
@@ -53,6 +60,7 @@ export const MENU_KEY_ALIASES: Record<string, string> = {
   catalog: 'product',
   'catalog:category': 'product:category',
   'catalog:vehicle': 'product:vehicle',
+  'product:import-export': 'product:list',
   'seo:home': 'seo:pages',
   'seo:about': 'seo:pages',
 };

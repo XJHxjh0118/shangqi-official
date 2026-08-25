@@ -68,6 +68,26 @@ export function useContactPage() {
     { immediate: true },
   )
 
+  watch(
+    () => form.region,
+    (value) => {
+      const match = displayContacts.value.find((c) => c.regionValue === value)
+      if (match) activeRegionId.value = match.id
+    },
+  )
+
+  const selectedContact = computed(
+    () =>
+      displayContacts.value.find((c) => c.id === activeRegionId.value) ||
+      displayContacts.value.find((c) => c.regionValue === form.region) ||
+      displayContacts.value[0] ||
+      null,
+  )
+
+  function telHref(phone: string) {
+    return 'tel:' + phone.replace(/[^\d+]/g, '')
+  }
+
   const submitted = ref(false)
   const submitting = ref(false)
   const submitError = ref('')
@@ -134,6 +154,8 @@ export function useContactPage() {
     onSubmit,
     activeRegionId,
     selectRegion,
+    selectedContact,
+    telHref,
     pending,
   }
 }

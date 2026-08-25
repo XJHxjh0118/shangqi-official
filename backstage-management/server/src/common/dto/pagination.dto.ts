@@ -24,6 +24,13 @@ export class PaginationDto {
   keyword?: string;
 }
 
+export class StatusPaginationDto extends PaginationDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
+
 export function paginate(page = 1, pageSize = 10) {
   const take = pageSize;
   const skip = (page - 1) * pageSize;

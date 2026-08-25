@@ -20,18 +20,14 @@ useScrollReveal(() => [
   homeVehicles.value.length,
 ])
 
-const featuredHero = computed(() => featuredProducts.value[0] || null)
-const featuredRest = computed(() => featuredProducts.value.slice(1, 4))
-
 const elevatorItems = computed(() => {
-  const items: Array<{ id: string; label: string }> = []
-  if (heroSlides.value.length) {
-    items.push({ id: 'home-hero', label: t('home.elevator.hero') })
-  }
+  const items: Array<{ id: string; label: string }> = [
+    { id: 'home-hero', label: t('home.elevator.hero') },
+  ]
   items.push(
     { id: 'home-featured', label: t('home.elevator.featured') },
-    { id: 'home-hot', label: t('home.elevator.hot') },
     { id: 'home-new', label: t('home.elevator.new') },
+    { id: 'home-hot', label: t('home.elevator.hot') },
   )
   if (services.value.length) {
     items.push({ id: 'home-services', label: t('home.elevator.services') })
@@ -56,9 +52,9 @@ const elevatorItems = computed(() => {
     <ClientOnly>
       <HomeElevator :items="elevatorItems" />
     </ClientOnly>
-    <HeroCarousel v-if="heroSlides.length" :slides="heroSlides" />
+    <HomeScrollVideo :slides="heroSlides" />
 
-    <section id="home-featured" class="section home-anchor" data-reveal>
+    <section id="home-featured" class="section home-anchor home-featured" data-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -69,20 +65,33 @@ const elevatorItems = computed(() => {
             {{ t('common.viewAll') }}
           </NuxtLink>
         </div>
-
-        <ProductGridSkeleton v-if="pending && !featuredProducts.length" :count="3" />
-        <div v-else class="featured-layout" data-reveal-stagger>
-          <ProductCard v-if="featuredHero" :product="featuredHero" />
-          <div class="product-grid" style="grid-template-columns: 1fr">
-            <ProductCard
-              v-for="p in featuredRest"
-              :key="p.id"
-              :product="p"
-              mode="list"
-            />
-          </div>
-        </div>
       </div>
+
+      <div v-if="pending && !featuredProducts.length" class="container">
+        <ProductGridSkeleton :count="3" />
+      </div>
+      <ClientOnly v-else-if="featuredProducts.length">
+        <FeaturedCylinderCarousel :products="featuredProducts" />
+        <template #fallback>
+          <div class="featured-cylinder is-pending" />
+        </template>
+      </ClientOnly>
+    </section>
+
+    <section id="home-new" class="section home-anchor" data-reveal>
+      <div class="container">
+        <h2 class="section-title">{{ t('home.newTitle') }}</h2>
+        <p class="section-desc">{{ t('home.newDesc') }}</p>
+      </div>
+      <div v-if="pending && !newProducts.length" class="container">
+        <ProductGridSkeleton :count="4" />
+      </div>
+      <ClientOnly v-else-if="newProducts.length">
+        <ProductCoverflowCarousel :products="newProducts" />
+        <template #fallback>
+          <div class="coverflow is-pending" />
+        </template>
+      </ClientOnly>
     </section>
 
     <section id="home-hot" class="section home-anchor" style="padding-top: 0" data-reveal>
@@ -92,16 +101,6 @@ const elevatorItems = computed(() => {
         <ProductGridSkeleton v-if="pending && !hotProducts.length" />
         <div v-else class="product-grid" data-reveal-stagger>
           <ProductCard v-for="p in hotProducts" :key="p.id" :product="p" />
-        </div>
-      </div>
-    </section>
-
-    <section id="home-new" class="section home-anchor" style="padding-top: 0" data-reveal>
-      <div class="container">
-        <h2 class="section-title">{{ t('home.newTitle') }}</h2>
-        <p class="section-desc">{{ t('home.newDesc') }}</p>
-        <div class="product-rail" data-reveal-stagger>
-          <ProductCard v-for="p in newProducts" :key="p.id" :product="p" />
         </div>
       </div>
     </section>

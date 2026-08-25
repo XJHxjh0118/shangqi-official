@@ -324,13 +324,13 @@ onBeforeUnmount(destroySortable);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <ToolbarTable
         :columns="tableColumns"
         :data="tree"
         :loading="loading"
-        :show-pagination="false"
+        client-pagination
         show-toolbar
         :toolbar-props="{ refresh: true, storageKey: 'admin-product-category-columns' }"
         :table-props="{

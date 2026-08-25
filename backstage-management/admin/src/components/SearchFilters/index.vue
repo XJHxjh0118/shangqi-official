@@ -785,6 +785,7 @@ $sf-text-color: #000;
 $sf-border-color: rgba(0, 0, 0, 0.1);
 
 .search-filters {
+  flex-shrink: 0;
   margin-bottom: 16px;
 
   &.is-bordered {

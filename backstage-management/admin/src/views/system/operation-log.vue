@@ -37,6 +37,7 @@ const filterFields: SearchFilterField[] = [
       { label: "导入", value: "导入" },
       { label: "排序", value: "排序" },
       { label: "批量修改", value: "批量修改" },
+      { label: "批量删除", value: "批量删除" },
       { label: "审核通过", value: "审核通过" },
       { label: "审核拒绝", value: "审核拒绝" },
       { label: "重置密码", value: "重置密码" },
@@ -89,7 +90,7 @@ function handleSearch() {
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="page-fill">
     <el-card shadow="never">
       <SearchFilters
         v-model="filters"
