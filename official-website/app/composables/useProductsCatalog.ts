@@ -4,12 +4,13 @@ import { mapApiProduct } from '~/utils/mapProduct'
 import type { ApiCategory } from '~/types/api'
 import { useCachedAsyncData } from '~/composables/useDataCache'
 
-export function useProductsCatalog() {
+export function useProductsCatalog(options?: { basePath?: string }) {
   const { t, locale } = useI18n()
   const route = useRoute()
   const localePath = useLocalePath()
   const router = useRouter()
   const { apiBase, getCategories, getProducts, getVehicles } = useApi()
+  const basePath = options?.basePath || '/products'
 
   usePageSeoMeta('products', {
     title: () => t('products.seo.title'),
@@ -115,7 +116,7 @@ export function useProductsCatalog() {
     if (q.value) query.q = q.value
     if (category.value) query.category = category.value
     if (vehicleId.value) query.vehicleId = vehicleId.value
-    router.push({ path: localePath('/products'), query })
+    router.push({ path: localePath(basePath), query })
   }
 
   function setCategory(code: string | null) {

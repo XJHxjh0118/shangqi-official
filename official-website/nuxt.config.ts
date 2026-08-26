@@ -36,9 +36,16 @@ export default defineNuxtConfig({
   ],
 
   components: [
-    '~/components',
+    {
+      path: '~/components',
+      ignore: ['**/portal/**'],
+    },
     {
       path: '~/components/skeleton',
+      pathPrefix: false,
+    },
+    {
+      path: '~/components/portal',
       pathPrefix: false,
     },
   ],
