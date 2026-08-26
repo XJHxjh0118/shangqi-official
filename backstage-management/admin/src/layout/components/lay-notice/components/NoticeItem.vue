@@ -4,12 +4,16 @@ import { ref, PropType, nextTick } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 
-defineProps({
+const props = defineProps({
   noticeItem: {
     type: Object as PropType<ListItem>,
     default: () => {}
   }
 });
+
+const emit = defineEmits<{
+  (e: "open", item: ListItem): void;
+}>();
 
 const titleRef = ref(null);
 const titleTooltip = ref(false);
@@ -50,6 +54,9 @@ function hoverDescription(event, description) {
 <template>
   <div
     class="notice-container border-0 border-b-[1px] border-solid border-[#f0f0f0] dark:border-[#303030]"
+    :class="{ 'is-link': Boolean(noticeItem.path) }"
+    role="button"
+    @click="emit('open', props.noticeItem)"
   >
     <el-avatar
       v-if="noticeItem.avatar"
@@ -118,6 +125,10 @@ function hoverDescription(event, description) {
   align-items: flex-start;
   justify-content: space-between;
   padding: 12px 0;
+
+  &.is-link {
+    cursor: pointer;
+  }
 
   // border-bottom: 1px solid #f0f0f0;
 

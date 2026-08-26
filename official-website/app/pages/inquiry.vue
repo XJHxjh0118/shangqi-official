@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { PhMinus, PhPlus, PhTrash } from '@phosphor-icons/vue'
 
+definePageMeta({
+  middleware: 'auth',
+})
+
 const {
   t,
   localePath,

@@ -67,8 +67,12 @@ export function useAuth() {
   }
 
   function logout() {
+    const { clear: clearFavorites } = useFavorites()
+    const { clear: clearInquiry } = useInquiryList()
     clearTokens()
     profile.value = null
+    clearFavorites()
+    clearInquiry()
   }
 
   function authErrorMessage(err: unknown) {

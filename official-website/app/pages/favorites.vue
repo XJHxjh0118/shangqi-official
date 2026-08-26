@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { FavoriteItem } from '~/composables/useFavorites'
 
+definePageMeta({
+  middleware: 'auth',
+})
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 const { items, remove } = useFavorites()

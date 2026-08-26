@@ -6,11 +6,26 @@ definePageMeta({
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const route = useRoute()
 const { login, authErrorMessage } = useAuth()
 
 const form = reactive({ email: '', password: '', remember: true })
 const submitting = ref(false)
 const error = ref('')
+
+function loginRedirect() {
+  const raw = route.query.redirect
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (
+    typeof value === 'string' &&
+    value.startsWith('/') &&
+    !value.startsWith('//') &&
+    !value.includes('://')
+  ) {
+    return value
+  }
+  return localePath('/account')
+}
 
 async function onSubmit() {
   if (submitting.value) return
@@ -18,7 +33,7 @@ async function onSubmit() {
   error.value = ''
   try {
     await login(form.email, form.password, form.remember)
-    await navigateTo(localePath('/account'))
+    await navigateTo(loginRedirect())
   } catch (err) {
     error.value = authErrorMessage(err)
   } finally {
