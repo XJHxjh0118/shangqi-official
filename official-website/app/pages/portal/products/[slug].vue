@@ -50,7 +50,16 @@ watch(
 )
 
 const pageRoot = ref<HTMLElement | null>(null)
-usePortalReveal(pageRoot)
+const { refresh: refreshReveal } = usePortalReveal(pageRoot)
+
+// 客户端跳转时详情异步渲染，需在内容出现后再挂滚动渐现
+watch(
+  () => [product.value?.id, relatedProducts.value.length, pending.value] as const,
+  async () => {
+    await nextTick()
+    refreshReveal()
+  },
+)
 </script>
 
 <template>
@@ -68,7 +77,7 @@ usePortalReveal(pageRoot)
         :description="description"
         :image="product.images[0]"
       />
-      <div class="p-detail p-reveal">
+      <div class="p-detail">
         <div class="p-detail-gallery">
           <img
             v-if="mediaTab === 'gallery'"

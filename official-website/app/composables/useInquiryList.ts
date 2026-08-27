@@ -7,59 +7,41 @@ export type InquiryItem = {
   slug?: string
 }
 
-// v2：id 改为后端数字产品 ID（字符串形式），旧 mock 购物车作废
-const STORAGE_KEY = 'official-inquiry-list-v1'
-
-function readStorage(): InquiryItem[] {
-  if (!import.meta.client) return []
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (!saved) return []
-  try {
-    const parsed = JSON.parse(saved)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
+const STORAGE_PREFIX = 'official-inquiry-list-v2'
 
 export function useInquiryList() {
   const items = useState<InquiryItem[]>('inquiry-list', () => [])
   const hydrated = useState('inquiry-list-hydrated', () => false)
-  const { token } = useAuthToken()
+  const { accountId, dropLegacyShopStorage } = useShopAccount()
+
+  function storageKey() {
+    return accountId.value ? shopStorageKey(STORAGE_PREFIX, accountId.value) : null
+  }
 
   function persist() {
-    if (!import.meta.client || !token.value) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
+    const key = storageKey()
+    if (!key) return
+    writeShopList(key, items.value)
   }
 
-  function hydrateIfLoggedIn() {
+  function hydrateForAccount() {
     if (!import.meta.client) return
-    items.value = token.value ? readStorage() : []
-  }
-
-  function clearStorage() {
-    if (import.meta.client) {
-      localStorage.removeItem(STORAGE_KEY)
-    }
+    dropLegacyShopStorage()
+    const key = storageKey()
+    items.value = key ? readShopList<InquiryItem>(key) : []
   }
 
   // 等挂载后再读 localStorage，避免 SSR/CSR hydration 节点不一致
   onMounted(() => {
     if (hydrated.value) return
     hydrated.value = true
-    hydrateIfLoggedIn()
+    hydrateForAccount()
   })
 
-  watch(token, (next, prev) => {
+  watch(accountId, (next, prev) => {
     if (!hydrated.value) return
-    if (next && !prev) {
-      hydrateIfLoggedIn()
-      return
-    }
-    if (!next) {
-      items.value = []
-      clearStorage()
-    }
+    if (next === prev) return
+    hydrateForAccount()
   })
 
   function has(id: string) {
@@ -67,7 +49,7 @@ export function useInquiryList() {
   }
 
   function addItem(item: Omit<InquiryItem, 'qty'> & { qty?: number }) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     const existing = items.value.find((i) => i.id === item.id)
     if (existing) {
       existing.qty += item.qty || 1
@@ -78,7 +60,7 @@ export function useInquiryList() {
   }
 
   function toggleItem(item: Omit<InquiryItem, 'qty'> & { qty?: number }) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     if (has(item.id)) {
       items.value = items.value.filter((i) => i.id !== item.id)
       persist()
@@ -88,7 +70,7 @@ export function useInquiryList() {
   }
 
   function updateQty(id: string, qty: number) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     const item = items.value.find((i) => i.id === id)
     if (item) {
       item.qty = Math.max(1, qty)
@@ -97,17 +79,22 @@ export function useInquiryList() {
   }
 
   function removeItem(id: string) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     items.value = items.value.filter((i) => i.id !== id)
     persist()
   }
 
   function clear() {
     items.value = []
-    clearStorage()
+    const key = storageKey()
+    if (key) removeShopList(key)
   }
 
-  const count = computed(() => items.value.reduce((sum, i) => sum + i.qty, 0))
+  function unload() {
+    items.value = []
+  }
 
-  return { items, count, has, addItem, toggleItem, updateQty, removeItem, clear }
+  const count = computed(() => items.value.reduce((sum, i) => i.qty + sum, 0))
+
+  return { items, count, has, addItem, toggleItem, updateQty, removeItem, clear, unload }
 }

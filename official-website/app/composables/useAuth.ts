@@ -22,6 +22,7 @@ function pickRefreshToken(data: AuthLoginResult | { data?: AuthLoginResult }) {
 export function useAuth() {
   const { token, setTokens, clearTokens } = useAuthToken()
   const profile = useState<AuthProfile | null>('auth-profile', () => null)
+  const { setShopAccount } = useShopAccount()
   const { login: apiLogin, register: apiRegister, getProfile } = useApi()
 
   const isLoggedIn = computed(() => Boolean(token.value))
@@ -38,6 +39,7 @@ export function useAuth() {
     }
     setTokens(accessToken, refresh, remember)
     profile.value = await getProfile(accessToken)
+    setShopAccount(profile.value?.id)
     return data
   }
 
@@ -48,10 +50,12 @@ export function useAuth() {
   async function fetchProfile() {
     if (!token.value) {
       profile.value = null
+      setShopAccount(null)
       return null
     }
     try {
       profile.value = await getProfile(token.value)
+      setShopAccount(profile.value?.id)
       return profile.value
     } catch (err: unknown) {
       const status = Number(
@@ -67,12 +71,13 @@ export function useAuth() {
   }
 
   function logout() {
-    const { clear: clearFavorites } = useFavorites()
-    const { clear: clearInquiry } = useInquiryList()
+    const { unload: unloadFavorites } = useFavorites()
+    const { unload: unloadInquiry } = useInquiryList()
     clearTokens()
     profile.value = null
-    clearFavorites()
-    clearInquiry()
+    setShopAccount(null)
+    unloadFavorites()
+    unloadInquiry()
   }
 
   function authErrorMessage(err: unknown) {

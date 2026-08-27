@@ -16,6 +16,7 @@ import type {
   CreateInquiryPayload,
   CreateMessagePayload,
   LoginPayload,
+  MyInquiryList,
   ProductQuery,
   RegisterPayload,
   SharePage,
@@ -49,6 +50,7 @@ const paths = {
   forgotSend: '/auth/forgot/send-code',
   forgotReset: '/auth/forgot/reset',
   changePassword: '/auth/change-password',
+  myInquiries: '/auth/inquiries',
 } as const
 
 export function useApi() {
@@ -178,5 +180,14 @@ export function useApi() {
 
     changePassword: (body: { currentPassword: string; newPassword: string }) =>
       apiFetch(paths.changePassword, { method: 'POST', body }),
+
+    getMyInquiries: (
+      query: {
+        page?: number
+        pageSize?: number
+        status?: string
+        keyword?: string
+      } = {},
+    ) => apiFetch<MyInquiryList>(paths.myInquiries, { query }),
   }
 }

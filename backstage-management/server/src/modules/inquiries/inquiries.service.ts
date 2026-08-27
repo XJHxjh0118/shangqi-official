@@ -33,7 +33,79 @@ export class InquiriesService {
         take,
         orderBy: { id: 'desc' },
         include: {
+          user: {
+            select: { id: true, username: true, company: true, nickname: true },
+          },
           items: { include: { product: { include: { i18n: true } } } },
+        },
+      }),
+      this.prisma.inquiry.count({ where }),
+    ]);
+    return pageResult(list, total, page, pageSize);
+  }
+
+  async findMine(userId: number, query: StatusPaginationDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const { skip, take } = paginate(page, pageSize);
+    const keyword = query.keyword?.trim();
+    const where = {
+      userId,
+      ...(query.status ? { status: query.status } : {}),
+      ...(keyword
+        ? {
+            OR: [
+              { company: { contains: keyword } },
+              { contactName: { contains: keyword } },
+              { email: { contains: keyword } },
+              { phone: { contains: keyword } },
+              { message: { contains: keyword } },
+              { handleRemark: { contains: keyword } },
+              {
+                items: {
+                  some: {
+                    product: {
+                      OR: [
+                        { sku: { contains: keyword } },
+                        { slug: { contains: keyword } },
+                        {
+                          i18n: {
+                            some: { name: { contains: keyword } },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              // 允许搜单号数字
+              ...(Number.isFinite(Number(keyword))
+                ? [{ id: Number(keyword) }]
+                : []),
+            ],
+          }
+        : {}),
+    };
+    const [list, total] = await this.prisma.$transaction([
+      this.prisma.inquiry.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { id: 'desc' },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  sku: true,
+                  slug: true,
+                  coverUrl: true,
+                  i18n: { select: { locale: true, name: true } },
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.inquiry.count({ where }),
@@ -45,6 +117,9 @@ export class InquiriesService {
     const row = await this.prisma.inquiry.findUnique({
       where: { id },
       include: {
+        user: {
+          select: { id: true, username: true, company: true, nickname: true },
+        },
         items: { include: { product: { include: { i18n: true } } } },
       },
     });

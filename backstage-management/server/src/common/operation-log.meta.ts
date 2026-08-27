@@ -1,7 +1,7 @@
 const RESOURCE_RULES: Array<{ test: (path: string) => boolean; label: string }> =
   [
     { test: (p) => p.includes('/product/category'), label: '产品分类' },
-    { test: (p) => p.includes('/product/vehicle'), label: '车型' },
+    { test: (p) => p.includes('/product/vehicle'), label: '车型管理' },
     { test: (p) => p.includes('/product/asset'), label: '产品素材' },
     { test: (p) => /\/product\/(import|export)(\/|$|\?)/.test(p), label: '产品' },
     { test: (p) => p.includes('/product'), label: '产品' },

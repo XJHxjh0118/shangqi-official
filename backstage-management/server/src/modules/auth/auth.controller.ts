@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { StatusPaginationDto } from '../../common/dto/pagination.dto';
+import { InquiriesService } from '../inquiries/inquiries.service';
 import { AuthService } from './auth.service';
 import {
   ChangePasswordDto,
@@ -16,7 +18,10 @@ import {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly inquiriesService: InquiriesService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -85,5 +90,15 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(user.id, dto);
+  }
+
+  @ApiBearerAuth()
+  @Get('inquiries')
+  @ApiOperation({ summary: '当前账号的历史询盘' })
+  myInquiries(
+    @CurrentUser() user: { id: number },
+    @Query() query: StatusPaginationDto,
+  ) {
+    return this.inquiriesService.findMine(user.id, query);
   }
 }

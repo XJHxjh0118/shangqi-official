@@ -35,7 +35,7 @@ export default {
       name: "ProductVehicle",
       component: () => import("@/views/product/vehicle.vue"),
       meta: {
-        title: "车型",
+        title: "车型管理",
         menu: "product:vehicle"
       }
     }

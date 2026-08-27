@@ -7,9 +7,12 @@ import {
   Post,
   Query,
   StreamableFile,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import {
   CreateContactMessageDto,
   CreateInquiryDto,
@@ -100,8 +103,14 @@ export class PublicController {
   }
 
   @Post('inquiry/add')
-  createInquiry(@Body() dto: CreateInquiryDto) {
-    return this.publicService.createInquiry(dto);
+  @ApiBearerAuth()
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: '提交询盘（登录时自动关联账号）' })
+  createInquiry(
+    @Body() dto: CreateInquiryDto,
+    @CurrentUser() user?: { id?: number } | null,
+  ) {
+    return this.publicService.createInquiry(dto, user?.id);
   }
 
   @Post('message/add')

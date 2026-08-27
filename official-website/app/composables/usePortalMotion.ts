@@ -55,7 +55,8 @@ export function usePortalReveal(root: Ref<HTMLElement | null>) {
           observer?.unobserve(entry.target)
         }
       },
-      { threshold: 0.14, rootMargin: '0px 0px -10% 0px' },
+      // 首屏大块内容也要能触发；过严的 bottom margin 会导致详情页永远不亮
+      { threshold: 0.08, rootMargin: '0px 0px -4% 0px' },
     )
   }
 
@@ -70,6 +71,14 @@ export function usePortalReveal(root: Ref<HTMLElement | null>) {
       el.style.setProperty('--reveal-delay', `${Math.min(seq * 55, 330)}ms`)
       seq += 1
       observer?.observe(el)
+
+      // 已在视口内的节点有时不会立刻回调，主动补一次可见态
+      const rect = el.getBoundingClientRect()
+      const viewH = window.innerHeight || document.documentElement.clientHeight
+      if (rect.top < viewH * 0.96 && rect.bottom > 0) {
+        el.classList.add('is-visible')
+        observer?.unobserve(el)
+      }
     })
   }
 

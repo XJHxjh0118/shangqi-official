@@ -45,6 +45,7 @@ model User {
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
   shareLinks       ShareLink[]
+  inquiries        Inquiry[]
 
   @@map("users")
 }
@@ -227,6 +228,8 @@ model ContactPerson {
 
 model Inquiry {
   id            Int           @id @default(autoincrement())
+  userId        Int?          @map("user_id")
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   company       String
   contactName   String        @map("contact_name")
   email         String
@@ -244,6 +247,7 @@ model Inquiry {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
+  @@index([userId])
   @@map("inquiries")
 }
 

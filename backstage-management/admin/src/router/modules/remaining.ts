@@ -21,7 +21,7 @@ export default [
     path: "/catalog/vehicle",
     redirect: "/product/vehicle",
     meta: {
-      title: "车型",
+      title: "车型管理",
       showLink: false
     }
   },

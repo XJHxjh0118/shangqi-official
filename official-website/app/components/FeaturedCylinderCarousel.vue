@@ -25,6 +25,7 @@ const frameId = { current: 0 }
 const progress = { current: 0 }
 const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }
 const reducedMotion = { current: false }
+const canHover = { current: false }
 const inView = { current: true }
 const pageVisible = { current: true }
 const seekTarget = { current: null as number | null }
@@ -34,6 +35,7 @@ let lastTime = 0
 let paintedActive = -1
 let cardNodes: HTMLElement[] = []
 let io: IntersectionObserver | null = null
+let hoverMq: MediaQueryList | null = null
 
 const cards = computed(() => props.products.slice(0, MAX_CARDS))
 
@@ -85,6 +87,7 @@ function updateMetrics() {
 }
 
 function onMouseMove(e: MouseEvent) {
+  if (!canHover.current) return
   const rx = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2)
   const ry = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2)
   mouse.targetX = Math.max(-1, Math.min(1, rx))
@@ -94,6 +97,16 @@ function onMouseMove(e: MouseEvent) {
 function onMouseLeave() {
   mouse.targetX = 0
   mouse.targetY = 0
+}
+
+function syncHoverCapability() {
+  const next = Boolean(hoverMq?.matches)
+  canHover.current = next
+  if (!next) {
+    mouse.targetX = 0
+    mouse.targetY = 0
+    pausedOnCenter.current = false
+  }
 }
 
 function onVisibility() {
@@ -106,12 +119,12 @@ function isCurrentCard(index: number) {
 }
 
 function onCardEnter(index: number) {
-  if (!isCurrentCard(index)) return
+  if (!canHover.current || !isCurrentCard(index)) return
   pausedOnCenter.current = true
 }
 
 function onCardLeave() {
-  if (!pausedOnCenter.current) return
+  if (!canHover.current || !pausedOnCenter.current) return
   pausedOnCenter.current = false
   resumeAt.current = performance.now() + 1000
 }

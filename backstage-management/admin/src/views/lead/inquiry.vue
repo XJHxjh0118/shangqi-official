@@ -214,6 +214,13 @@ onMounted(fetchList);
             <el-descriptions-item label="邮箱">{{ detail.email || "-" }}</el-descriptions-item>
             <el-descriptions-item label="电话">{{ detail.phone || "-" }}</el-descriptions-item>
             <el-descriptions-item label="区域">{{ detail.region || "-" }}</el-descriptions-item>
+            <el-descriptions-item label="关联账号">
+              {{
+                detail.user
+                  ? `${detail.user.company || detail.user.nickname || detail.user.username} (#${detail.user.id})`
+                  : "未登录提交"
+              }}
+            </el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="statusType(detail.status)" size="small">
                 {{ statusLabel(detail.status) }}

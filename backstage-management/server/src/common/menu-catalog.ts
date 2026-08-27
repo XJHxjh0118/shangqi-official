@@ -12,7 +12,7 @@ export const MENU_CATALOG: MenuNode[] = [
     children: [
       { key: 'product:category', title: '产品分类' },
       { key: 'product:list', title: '产品列表' },
-      { key: 'product:vehicle', title: '车型' },
+      { key: 'product:vehicle', title: '车型管理' },
     ],
   },
   {

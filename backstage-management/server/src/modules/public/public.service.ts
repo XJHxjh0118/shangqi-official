@@ -459,7 +459,7 @@ export class PublicService {
     }
   }
 
-  async createInquiry(dto: CreateInquiryDto) {
+  async createInquiry(dto: CreateInquiryDto, userId?: number | null) {
     if (!dto.items?.length) {
       throw new BadRequestException('请至少选择一个产品');
     }
@@ -473,6 +473,7 @@ export class PublicService {
 
     return this.prisma.inquiry.create({
       data: {
+        userId: userId || undefined,
         company: dto.company,
         contactName: dto.contactName,
         email: dto.email,

@@ -1,0 +1,79 @@
+# Gitee Actions（若仓库已开通）或兼容平台使用
+# 仅手动触发：在「Actions / 流水线」里点 Run / 运行
+name: Manual build and deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: '构建完成后是否部署到服务器'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Build release artifacts
+        env:
+          NUXT_PUBLIC_SITE_URL: ${{ vars.NUXT_PUBLIC_SITE_URL }}
+          NUXT_PUBLIC_API_BASE: ${{ vars.NUXT_PUBLIC_API_BASE }}
+          NUXT_PUBLIC_SITE_NAME: ${{ vars.NUXT_PUBLIC_SITE_NAME }}
+          NUXT_IMAGE_DOMAINS: ${{ vars.NUXT_IMAGE_DOMAINS }}
+        run: bash deploy/ci-build.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shangqi-release
+          path: dist-release/*
+          retention-days: 14
+
+      - name: Prepare SSH
+        if: ${{ github.event.inputs.deploy == 'yes' && secrets.DEPLOY_SSH_KEY != '' }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Upload to server and restart
+        if: ${{ github.event.inputs.deploy == 'yes' && secrets.DEPLOY_SSH_KEY != '' }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          DEPLOY_USER="${DEPLOY_USER:-root}"
+          DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/shangqi}"
+          REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}"
+          STAMP="$(date +%Y%m%d-%H%M%S)"
+          ssh "$REMOTE" "mkdir -p '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/deploy' '${DEPLOY_PATH}/releases'"
+          scp dist-release/api.tar.gz dist-release/admin.tar.gz dist-release/website.tar.gz \
+            "$REMOTE:${DEPLOY_PATH}/releases/${STAMP}/"
+          scp deploy/server-update.sh "$REMOTE:${DEPLOY_PATH}/deploy/server-update.sh"
+          ssh "$REMOTE" "chmod +x '${DEPLOY_PATH}/deploy/server-update.sh' \
+            && ln -sfn '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/releases/latest' \
+            && bash '${DEPLOY_PATH}/deploy/server-update.sh' '${DEPLOY_PATH}/releases/latest' \
+            && ls -dt '${DEPLOY_PATH}/releases'/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf"

@@ -6,57 +6,40 @@ export type FavoriteItem = {
   image?: string
 }
 
-const STORAGE_KEY = 'official-favorites-v1'
-
-function readStorage(): FavoriteItem[] {
-  if (!import.meta.client) return []
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (!saved) return []
-  try {
-    const parsed = JSON.parse(saved)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
+const STORAGE_PREFIX = 'official-favorites-v2'
 
 export function useFavorites() {
   const items = useState<FavoriteItem[]>('favorites-list', () => [])
   const hydrated = useState('favorites-hydrated', () => false)
-  const { token } = useAuthToken()
+  const { accountId, dropLegacyShopStorage } = useShopAccount()
+
+  function storageKey() {
+    return accountId.value ? shopStorageKey(STORAGE_PREFIX, accountId.value) : null
+  }
 
   function persist() {
-    if (!import.meta.client || !token.value) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
+    const key = storageKey()
+    if (!key) return
+    writeShopList(key, items.value)
   }
 
-  function hydrateIfLoggedIn() {
+  function hydrateForAccount() {
     if (!import.meta.client) return
-    items.value = token.value ? readStorage() : []
-  }
-
-  function clearStorage() {
-    if (import.meta.client) {
-      localStorage.removeItem(STORAGE_KEY)
-    }
+    dropLegacyShopStorage()
+    const key = storageKey()
+    items.value = key ? readShopList<FavoriteItem>(key) : []
   }
 
   onMounted(() => {
     if (hydrated.value) return
     hydrated.value = true
-    hydrateIfLoggedIn()
+    hydrateForAccount()
   })
 
-  watch(token, (next, prev) => {
+  watch(accountId, (next, prev) => {
     if (!hydrated.value) return
-    if (next && !prev) {
-      hydrateIfLoggedIn()
-      return
-    }
-    if (!next) {
-      items.value = []
-      clearStorage()
-    }
+    if (next === prev) return
+    hydrateForAccount()
   })
 
   function has(id: string) {
@@ -64,7 +47,7 @@ export function useFavorites() {
   }
 
   function toggle(item: FavoriteItem) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     if (has(item.id)) {
       items.value = items.value.filter((i) => i.id !== item.id)
     } else {
@@ -74,17 +57,22 @@ export function useFavorites() {
   }
 
   function remove(id: string) {
-    if (!requireLogin()) return
+    if (!requireLogin() || !accountId.value) return
     items.value = items.value.filter((i) => i.id !== id)
     persist()
   }
 
   function clear() {
     items.value = []
-    clearStorage()
+    const key = storageKey()
+    if (key) removeShopList(key)
+  }
+
+  function unload() {
+    items.value = []
   }
 
   const count = computed(() => items.value.length)
 
-  return { items, count, has, toggle, remove, clear }
+  return { items, count, has, toggle, remove, clear, unload }
 }

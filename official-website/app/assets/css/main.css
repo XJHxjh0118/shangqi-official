@@ -2885,8 +2885,21 @@ body::after {
   color: var(--color-muted);
 }
 
-.account-links a:hover {
+.account-links a:hover,
+.account-link-btn:hover {
   color: var(--color-ink);
+}
+
+.account-link-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .account-main {
@@ -2896,6 +2909,228 @@ body::after {
 
 .account-form {
   max-width: 480px;
+}
+
+.account-section-desc {
+  margin: -8px 0 20px;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-history-loading,
+.account-history-empty {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.account-history-empty {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.account-history-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.account-history-row {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  border: 1px solid var(--color-hairline);
+  background: transparent;
+  color: inherit;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.account-history-row:hover {
+  border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 4%, transparent);
+}
+
+.account-history-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.account-history-row-main strong {
+  font-weight: 600;
+}
+
+.account-history-meta,
+.account-history-preview {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.account-history-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-history-status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px solid var(--color-hairline);
+}
+
+.account-history-status[data-status='new'] {
+  color: #9a6700;
+  border-color: #f0d48a;
+  background: #fff8e8;
+}
+
+.account-history-status[data-status='handled'] {
+  color: #1b7a3d;
+  border-color: #9ed9b0;
+  background: #eef9f1;
+}
+
+.account-history-pager {
+  margin-top: 16px;
+}
+
+.account-history-drawer-body {
+  display: grid;
+  gap: 16px;
+}
+
+.account-history-back {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.account-history-back:hover {
+  color: var(--color-ink);
+}
+
+.account-history-drawer-search {
+  display: grid;
+  gap: 8px;
+}
+
+.account-history-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.account-history-drawer-head h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.account-history-drawer-head p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.account-history-drawer-block h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.account-history-drawer-block > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-history-product-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.account-history-product {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--color-hairline);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.account-history-product:hover {
+  border-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+}
+
+.account-history-product img,
+.account-history-product-fallback {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+}
+
+.account-history-product-meta {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.account-history-product-meta strong {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-history-product-meta em {
+  font-style: normal;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.account-history-product-qty {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.account-history-handle-meta {
+  margin: 0 0 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.account-history-handle-meta dt {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.account-history-handle-meta dd {
+  margin: 0;
+  font-size: 14px;
 }
 
 @media (min-width: 768px) {

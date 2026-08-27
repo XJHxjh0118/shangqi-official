@@ -261,6 +261,44 @@ export type CreateInquiryPayload = {
   items: Array<{ productId: number; quantity: number; note?: string }>
 }
 
+export type MyInquiryItem = {
+  id: number
+  quantity: number
+  note?: string | null
+  product?: {
+    id: number
+    sku: string
+    slug: string
+    coverUrl?: string | null
+    i18n?: Array<{ locale: string; name: string }>
+  } | null
+}
+
+export type MyInquiry = {
+  id: number
+  company: string
+  contactName: string
+  email: string
+  phone?: string | null
+  region?: string | null
+  message?: string | null
+  status: string
+  handleMethod?: string | null
+  handleResult?: string | null
+  handleRemark?: string | null
+  handledBy?: string | null
+  handledAt?: string | null
+  createdAt: string
+  items: MyInquiryItem[]
+}
+
+export type MyInquiryList = {
+  list: MyInquiry[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export type CreateMessagePayload = {
   name: string
   email: string
