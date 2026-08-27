@@ -23,6 +23,7 @@
     "@nuxtjs/i18n": "^10.6.0",
     "@nuxtjs/seo": "^5.3.6",
     "@phosphor-icons/vue": "^2.2.1",
+    "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.8",
     "@takumi-rs/core": "^2.9.2",
     "@vueuse/nuxt": "^14.4.0",
     "element-plus": "^2.14.3",

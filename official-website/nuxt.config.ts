@@ -200,6 +200,13 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
   },
 
+  vite: {
+    // Element Plus SSR：避免 @popperjs/core CJS 命名导出报错
+    ssr: {
+      noExternal: ['element-plus', '@popperjs/core', '@sxzz/popperjs-es'],
+    },
+  },
+
   routeRules: {
     '/join': { redirect: { to: '/contact', statusCode: 301 } },
     '/en/join': { redirect: { to: '/en/contact', statusCode: 301 } },

@@ -68,7 +68,12 @@ if [ -f .output/server/package.json ]; then
   # nitro 生成的 package.json 用 npm 常报 edgesOut；改用 yarn（与线上一致）
   corepack enable
   corepack prepare yarn@1.22.22 --activate
-  (cd .output/server && yarn install --production --ignore-engines)
+  (
+    cd .output/server
+    yarn install --production --ignore-engines
+    # Element Plus SSR 需要 ESM 版 popper
+    yarn add '@popperjs/core@npm:@sxzz/popperjs-es@^2.11.8' --production --ignore-engines || true
+  )
 fi
 mkdir -p "$OUT/website"
 cp -R .output "$OUT/website/"
