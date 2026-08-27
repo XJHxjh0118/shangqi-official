@@ -65,8 +65,10 @@ if [ -f .output/server/package.json ]; then
     delete p.dependencies["@takumi-rs/core-win32-x64-msvc"];
     fs.writeFileSync(".output/server/package.json", JSON.stringify(p, null, 2));
   '
-  # 在 CI 里装好服务端依赖，避免 1G 机器 OOM
-  (cd .output/server && npm install --omit=dev --no-audit --no-fund)
+  # nitro 生成的 package.json 用 npm 常报 edgesOut；改用 yarn（与线上一致）
+  corepack enable
+  corepack prepare yarn@1.22.22 --activate
+  (cd .output/server && yarn install --production --ignore-engines)
 fi
 mkdir -p "$OUT/website"
 cp -R .output "$OUT/website/"
