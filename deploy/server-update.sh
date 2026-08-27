@@ -15,7 +15,7 @@ if [ ! -d "$RELEASE_DIR" ]; then
   exit 1
 fi
 
-# 无 rsync 时用 tar 管道同步（保留指定文件）
+# 无 rsync 时用 cp 同步；可保留指定相对路径
 sync_tree() {
   local src="$1"
   local dst="$2"
@@ -31,7 +31,6 @@ sync_tree() {
     return
   fi
 
-  # 先备份要保留的文件到临时目录
   local keep_tmp
   keep_tmp="$(mktemp -d)"
   local name
@@ -42,11 +41,9 @@ sync_tree() {
     fi
   done
 
-  # 清空目标后整包拷入
   find "$dst" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   cp -a "$src"/. "$dst"/
 
-  # 恢复保留文件
   for name in "$@"; do
     if [ -e "$keep_tmp/$name" ]; then
       rm -rf "$dst/$name"
@@ -62,15 +59,19 @@ echo "==> Update from $RELEASE_DIR"
 # ---- API ----
 if [ -f "$RELEASE_DIR/api.tar.gz" ]; then
   echo "==> API"
+  # 先停进程，避免 node_modules 被占用导致 npm ENOTEMPTY
+  pm2 stop shangqi-api >/dev/null 2>&1 || true
   mkdir -p "$API_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/api.tar.gz" -C "$TMP"
-  sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db node_modules
+  # 只保留运行时数据；不保留旧 node_modules
+  sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db
   rm -rf "$TMP"
   cd "$API_DIR"
   if [ ! -f .env ]; then
     echo "WARNING: $API_DIR/.env missing — create it before restart"
   fi
+  rm -rf node_modules
   npm install --omit=dev --no-fund --no-audit
   npx prisma generate
   npx prisma migrate deploy
@@ -83,12 +84,14 @@ fi
 # ---- Website ----
 if [ -f "$RELEASE_DIR/website.tar.gz" ]; then
   echo "==> Website"
+  pm2 stop shangqi-web >/dev/null 2>&1 || true
   mkdir -p "$WEB_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/website.tar.gz" -C "$TMP"
   sync_tree "$TMP" "$WEB_DIR"
   rm -rf "$TMP"
   cd "$WEB_DIR/.output/server"
+  rm -rf node_modules
   if command -v yarn >/dev/null 2>&1; then
     yarn install --production
   else
