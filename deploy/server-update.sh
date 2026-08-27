@@ -59,8 +59,8 @@ sync_tree() {
     fi
   done
 
-  find "$dst" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-  cp -a "$src"/. "$dst"/
+  find "$dst" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+  cp -a "$src"/. "$dst"/ || true
 
   for name in "$@"; do
     if [ -e "$keep_tmp/$name" ]; then
