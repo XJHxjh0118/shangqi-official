@@ -1,7 +1,6 @@
-# Gitee Actions（若仓库已开通）或兼容平台使用
-# 仅手动触发：在「Actions / 流水线」里点 Run / 运行
 name: Manual build and deploy
 
+# 不会 push 自动部署；要在 Actions 页点 “Run workflow”
 on:
   workflow_dispatch:
     inputs:
@@ -30,6 +29,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backstage-management/server/package-lock.json
+            official-website/package-lock.json
 
       - name: Enable pnpm
         run: corepack enable
@@ -42,7 +45,7 @@ jobs:
           NUXT_IMAGE_DOMAINS: ${{ vars.NUXT_IMAGE_DOMAINS }}
         run: bash deploy/ci-build.sh
 
-      - name: Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shangqi-release
@@ -50,26 +53,28 @@ jobs:
           retention-days: 14
 
       - name: Prepare SSH
-        if: ${{ github.event.inputs.deploy == 'yes' && secrets.DEPLOY_SSH_KEY != '' }}
+        if: ${{ inputs.deploy == 'yes' }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Upload to server and restart
-        if: ${{ github.event.inputs.deploy == 'yes' && secrets.DEPLOY_SSH_KEY != '' }}
+        if: ${{ inputs.deploy == 'yes' }}
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           set -euo pipefail
+          : "${DEPLOY_HOST:?missing secret DEPLOY_HOST}"
           DEPLOY_USER="${DEPLOY_USER:-root}"
           DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/shangqi}"
           REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}"
           STAMP="$(date +%Y%m%d-%H%M%S)"
-          ssh "$REMOTE" "mkdir -p '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/deploy' '${DEPLOY_PATH}/releases'"
+          ssh -o StrictHostKeyChecking=accept-new "$REMOTE" \
+            "mkdir -p '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/deploy' '${DEPLOY_PATH}/releases'"
           scp dist-release/api.tar.gz dist-release/admin.tar.gz dist-release/website.tar.gz \
             "$REMOTE:${DEPLOY_PATH}/releases/${STAMP}/"
           scp deploy/server-update.sh "$REMOTE:${DEPLOY_PATH}/deploy/server-update.sh"
