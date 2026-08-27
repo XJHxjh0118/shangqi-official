@@ -59,11 +59,17 @@ jobs:
 
       - name: Prepare SSH
         if: ${{ inputs.deploy == 'yes' }}
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          # 用环境变量写入，去掉 Windows CRLF，并保证末尾换行（避免 libcrypto 解析失败）
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Upload to server and restart
         if: ${{ inputs.deploy == 'yes' }}
@@ -78,12 +84,14 @@ jobs:
           DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/shangqi}"
           REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}"
           STAMP="$(date +%Y%m%d-%H%M%S)"
-          ssh -o StrictHostKeyChecking=accept-new "$REMOTE" \
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new "$REMOTE" \
             "mkdir -p '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/deploy' '${DEPLOY_PATH}/releases'"
-          scp dist-release/api.tar.gz dist-release/admin.tar.gz dist-release/website.tar.gz \
+          scp -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+            dist-release/api.tar.gz dist-release/admin.tar.gz dist-release/website.tar.gz \
             "$REMOTE:${DEPLOY_PATH}/releases/${STAMP}/"
-          scp deploy/server-update.sh "$REMOTE:${DEPLOY_PATH}/deploy/server-update.sh"
-          ssh "$REMOTE" "chmod +x '${DEPLOY_PATH}/deploy/server-update.sh' \
+          scp -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+            deploy/server-update.sh "$REMOTE:${DEPLOY_PATH}/deploy/server-update.sh"
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes "$REMOTE" "chmod +x '${DEPLOY_PATH}/deploy/server-update.sh' \
             && ln -sfn '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/releases/latest' \
             && bash '${DEPLOY_PATH}/deploy/server-update.sh' '${DEPLOY_PATH}/releases/latest' \
             && ls -dt '${DEPLOY_PATH}/releases'/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf"

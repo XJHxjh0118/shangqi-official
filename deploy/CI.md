@@ -56,7 +56,22 @@ cat /root/.ssh/github_deploy
 | `DEPLOY_HOST` | `8.134.149.243` |
 | `DEPLOY_USER` | `root` |
 | `DEPLOY_PATH` | `/www/wwwroot/shangqi` |
-| `DEPLOY_SSH_KEY` | 上一步私钥全文 |
+| `DEPLOY_SSH_KEY` | 上一步**私钥**全文（不是 `.pub`） |
+
+`DEPLOY_SSH_KEY` 粘贴要求（很重要，错了会报 `error in libcrypto`）：
+
+1. 宝塔执行：`cat /root/.ssh/github_deploy`（或你生成的那个**无私钥后缀的文件**）
+2. 内容必须以 `-----BEGIN OPENSSH PRIVATE KEY-----` 开头，以 `-----END OPENSSH PRIVATE KEY-----` 结尾
+3. 整段原样粘贴进 Secret，**不要加引号**，不要只贴 `.pub` 公钥
+4. 若没有密钥，重新生成：
+
+```bash
+ssh-keygen -t ed25519 -f /root/.ssh/github_deploy -N ""
+cat /root/.ssh/github_deploy.pub >> /root/.ssh/authorized_keys
+cat /root/.ssh/github_deploy
+```
+
+然后在 GitHub 里 **Update** `DEPLOY_SSH_KEY` 为新私钥。
 
 可选（Variables，不是 Secrets）：若以后换域名再设
 
