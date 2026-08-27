@@ -15,22 +15,57 @@ if [ ! -d "$RELEASE_DIR" ]; then
   exit 1
 fi
 
+# 无 rsync 时用 tar 管道同步（保留指定文件）
+sync_tree() {
+  local src="$1"
+  local dst="$2"
+  shift 2
+  mkdir -p "$dst"
+  if command -v rsync >/dev/null 2>&1; then
+    local excludes=()
+    local a
+    for a in "$@"; do
+      excludes+=(--exclude "$a")
+    done
+    rsync -a --delete "${excludes[@]}" "$src/" "$dst/"
+    return
+  fi
+
+  # 先备份要保留的文件到临时目录
+  local keep_tmp
+  keep_tmp="$(mktemp -d)"
+  local name
+  for name in "$@"; do
+    if [ -e "$dst/$name" ]; then
+      mkdir -p "$(dirname "$keep_tmp/$name")"
+      cp -a "$dst/$name" "$keep_tmp/$name"
+    fi
+  done
+
+  # 清空目标后整包拷入
+  find "$dst" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  cp -a "$src"/. "$dst"/
+
+  # 恢复保留文件
+  for name in "$@"; do
+    if [ -e "$keep_tmp/$name" ]; then
+      rm -rf "$dst/$name"
+      mkdir -p "$(dirname "$dst/$name")"
+      cp -a "$keep_tmp/$name" "$dst/$name"
+    fi
+  done
+  rm -rf "$keep_tmp"
+}
+
 echo "==> Update from $RELEASE_DIR"
 
 # ---- API ----
 if [ -f "$RELEASE_DIR/api.tar.gz" ]; then
   echo "==> API"
   mkdir -p "$API_DIR"
-  # 保留运行时数据
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/api.tar.gz" -C "$TMP"
-  rsync -a --delete \
-    --exclude '.env' \
-    --exclude 'uploads' \
-    --exclude 'data.db' \
-    --exclude 'prod.db' \
-    --exclude 'node_modules' \
-    "$TMP/" "$API_DIR/"
+  sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db node_modules
   rm -rf "$TMP"
   cd "$API_DIR"
   if [ ! -f .env ]; then
@@ -51,10 +86,9 @@ if [ -f "$RELEASE_DIR/website.tar.gz" ]; then
   mkdir -p "$WEB_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/website.tar.gz" -C "$TMP"
-  rsync -a --delete "$TMP/" "$WEB_DIR/"
+  sync_tree "$TMP" "$WEB_DIR"
   rm -rf "$TMP"
   cd "$WEB_DIR/.output/server"
-  # 优先 yarn（你之前在服务器上用它绕过了 npm edgesOut）
   if command -v yarn >/dev/null 2>&1; then
     yarn install --production
   else
@@ -71,7 +105,7 @@ if [ -f "$RELEASE_DIR/admin.tar.gz" ]; then
   mkdir -p "$ADMIN_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/admin.tar.gz" -C "$TMP"
-  rsync -a --delete "$TMP/" "$ADMIN_DIR/"
+  sync_tree "$TMP" "$ADMIN_DIR"
   rm -rf "$TMP"
 fi
 
