@@ -4,16 +4,25 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/dist-release"
-SITE_URL="${NUXT_PUBLIC_SITE_URL:-http://8.134.149.243}"
-API_BASE="${NUXT_PUBLIC_API_BASE:-http://8.134.149.243/car}"
-IMAGE_DOMAINS="${NUXT_IMAGE_DOMAINS:-8.134.149.243,localhost,127.0.0.1}"
+# 空字符串时也要用默认值（GitHub vars 未配置时会是空）
+SITE_URL="${NUXT_PUBLIC_SITE_URL:-}"
+SITE_URL="${SITE_URL:-http://8.134.149.243}"
+API_BASE="${NUXT_PUBLIC_API_BASE:-}"
+API_BASE="${API_BASE:-http://8.134.149.243/car}"
+IMAGE_DOMAINS="${NUXT_IMAGE_DOMAINS:-}"
+IMAGE_DOMAINS="${IMAGE_DOMAINS:-8.134.149.243,localhost,127.0.0.1}"
+
+# prisma generate 需要该变量存在（不必是真实库）
+export DATABASE_URL="${DATABASE_URL:-file:./ci.db}"
+export HUSKY=0
+export CI=true
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
 echo "==> Build API"
 cd "$ROOT/backstage-management/server"
-npm ci
+npm ci --no-audit --no-fund
 npx prisma generate
 npm run build
 mkdir -p "$OUT/api"
@@ -24,12 +33,13 @@ cd "$ROOT/backstage-management/admin"
 cat > .env.production <<'EOF'
 VITE_PUBLIC_PATH = /admin/
 VITE_ROUTER_HISTORY = "hash"
-VITE_API_BASE_URL = /car
+VITE_API_BASE_URL = /ca
 VITE_CDN = false
 VITE_COMPRESSION = "none"
 VITE_HIDE_HOME = false
 EOF
 corepack enable
+corepack prepare pnpm@9.15.9 --activate
 pnpm install --frozen-lockfile || pnpm install
 pnpm build
 mkdir -p "$OUT/admin"
@@ -41,7 +51,7 @@ export NUXT_PUBLIC_SITE_URL="$SITE_URL"
 export NUXT_PUBLIC_API_BASE="$API_BASE"
 export NUXT_PUBLIC_SITE_NAME="${NUXT_PUBLIC_SITE_NAME:-上汽经创}"
 export NUXT_IMAGE_DOMAINS="$IMAGE_DOMAINS"
-npm ci
+npm ci --no-audit --no-fund
 npm run build
 # 去掉 Windows 专用 sharp，避免污染 Linux 产物（CI 本身是 linux，仍做一次保险）
 if [ -f .output/server/package.json ]; then
