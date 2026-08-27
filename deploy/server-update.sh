@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 在服务器上执行：用最新产物覆盖运行目录并重启 PM2
+# 产物应已含 node_modules（由 CI 在 Linux 打好），本机尽量不再 npm install
 # 用法：
 #   bash /www/wwwroot/shangqi/deploy/server-update.sh /www/wwwroot/shangqi/releases/latest
 set -euo pipefail
@@ -15,7 +16,24 @@ if [ ! -d "$RELEASE_DIR" ]; then
   exit 1
 fi
 
-# 无 rsync 时用 cp 同步；可保留指定相对路径
+# 1G 机器兜底：没有 swap 就建 2G（只做一次）
+ensure_swap() {
+  if swapon --show 2>/dev/null | grep -q .; then
+    return 0
+  fi
+  if [ -f /swapfile ]; then
+    swapon /swapfile 2>/dev/null || true
+    return 0
+  fi
+  echo "==> Creating 2G swap (one-time, for low-memory VPS)"
+  if fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none; then
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+    swapon /swapfile || true
+    grep -q '/swapfile' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  fi
+}
+
 sync_tree() {
   local src="$1"
   local dst="$2"
@@ -54,25 +72,31 @@ sync_tree() {
   rm -rf "$keep_tmp"
 }
 
+ensure_swap
+
+# 释放内存：更新前先停站
+pm2 stop shangqi-api >/dev/null 2>&1 || true
+pm2 stop shangqi-web >/dev/null 2>&1 || true
+
 echo "==> Update from $RELEASE_DIR"
 
 # ---- API ----
 if [ -f "$RELEASE_DIR/api.tar.gz" ]; then
   echo "==> API"
-  # 先停进程，避免 node_modules 被占用导致 npm ENOTEMPTY
-  pm2 stop shangqi-api >/dev/null 2>&1 || true
   mkdir -p "$API_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/api.tar.gz" -C "$TMP"
-  # 只保留运行时数据；不保留旧 node_modules
+  # 保留运行时数据；node_modules 用 CI 产物覆盖
   sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db
   rm -rf "$TMP"
   cd "$API_DIR"
   if [ ! -f .env ]; then
     echo "WARNING: $API_DIR/.env missing — create it before restart"
   fi
-  rm -rf node_modules
-  npm install --omit=dev --no-fund --no-audit
+  if [ ! -d node_modules ]; then
+    echo "WARNING: api node_modules missing in release; fallback install (may OOM on 1G)"
+    npm install --omit=dev --no-fund --no-audit --maxsockets 1
+  fi
   npx prisma generate
   npx prisma migrate deploy
   mkdir -p uploads
@@ -84,18 +108,19 @@ fi
 # ---- Website ----
 if [ -f "$RELEASE_DIR/website.tar.gz" ]; then
   echo "==> Website"
-  pm2 stop shangqi-web >/dev/null 2>&1 || true
   mkdir -p "$WEB_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/website.tar.gz" -C "$TMP"
   sync_tree "$TMP" "$WEB_DIR"
   rm -rf "$TMP"
   cd "$WEB_DIR/.output/server"
-  rm -rf node_modules
-  if command -v yarn >/dev/null 2>&1; then
-    yarn install --production
-  else
-    npm install --omit=dev --no-fund --no-audit || true
+  if [ ! -d node_modules ]; then
+    echo "WARNING: website node_modules missing; fallback install"
+    if command -v yarn >/dev/null 2>&1; then
+      yarn install --production
+    else
+      npm install --omit=dev --no-fund --no-audit --maxsockets 1 || true
+    fi
   fi
   pm2 describe shangqi-web >/dev/null 2>&1 \
     && pm2 restart shangqi-web --update-env \
