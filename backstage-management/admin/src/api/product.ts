@@ -3,10 +3,10 @@ import { http } from "@/utils/http";
 type Result<T = any> = { code: number; data: T; msg: string };
 
 export const getProducts = (params?: object) =>
-  http.request<Result>("get", "/product/list", { params });
+  http.request<Result>("post", "/product/list", { data: params });
 
 export const getProduct = (id: number) =>
-  http.request<Result>("get", `/product/detail/${id}`);
+  http.request<Result>("post", `/product/detail/${id}`);
 
 export const createProduct = (data: object) =>
   http.request<Result>("post", "/product/add", { data });
@@ -24,14 +24,14 @@ export const batchDeleteProducts = (ids: number[]) =>
   http.request<Result>("delete", "/product/batch", { data: { ids } });
 
 export const exportProducts = (ids: number[]) =>
-  http.request<Blob>("get", "/product/export", {
-    params: { ids: ids.join(",") },
+  http.request<Blob>("post", "/product/export", {
+    data: { ids: ids.join(",") },
     responseType: "blob",
     timeout: 60000
   } as any);
 
 export const downloadProductImportTemplate = () =>
-  http.request<Blob>("get", "/product/import-template", {
+  http.request<Blob>("post", "/product/import-template", {
     responseType: "blob"
   } as any);
 

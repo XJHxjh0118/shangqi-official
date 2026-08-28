@@ -1,12 +1,13 @@
 import { http } from "@/utils/http";
+import type { ListQueryParams } from "@/utils/list-query";
 
 type Result<T = any> = { code: number; data: T; msg: string };
 
-export const getCategories = () =>
-  http.request<Result>("get", "/product/category/list");
+export const getCategories = (params?: ListQueryParams) =>
+  http.request<Result>("post", "/product/category/list", { data: params });
 
 export const getCategoriesFlat = () =>
-  http.request<Result>("get", "/product/category/flat");
+  http.request<Result>("post", "/product/category/flat");
 
 export const createCategory = (data: object) =>
   http.request<Result>("post", "/product/category/add", { data });

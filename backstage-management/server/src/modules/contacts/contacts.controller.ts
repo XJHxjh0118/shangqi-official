@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -18,7 +17,7 @@ import { CreateContactDto, UpdateContactDto } from './dto/contact.dto';
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
-  @Get('list')
+  @Post('list')
   findAll() {
     return this.contactsService.findAll();
   }

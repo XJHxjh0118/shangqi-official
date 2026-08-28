@@ -13,8 +13,13 @@ import {
 import {
   CreateCategoryDto,
   NestedChildCategoryDto,
+  QueryCategoryDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
+import {
+  buildKeywordOr,
+  parseOptionalBoolean,
+} from '../../common/query.util';
 
 const categoryInclude = {
   i18n: true,
@@ -28,12 +33,67 @@ const categoryInclude = {
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.category.findMany({
-      orderBy: [{ sort: 'asc' }, { id: 'asc' }],
-      include: categoryInclude,
-      where: { parentId: null },
+  findAll(query: QueryCategoryDto = {}) {
+    const keyword = query.keyword?.trim();
+    const enabled = parseOptionalBoolean(query.enabled);
+    const level = query.level?.trim();
+
+    if (!keyword && !level && enabled === undefined) {
+      return this.prisma.category.findMany({
+        orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+        include: categoryInclude,
+        where: { parentId: null },
+      });
+    }
+
+    const where: Record<string, unknown> = {
+      ...(enabled !== undefined ? { enabled } : {}),
+      ...(level === 'main' ? { parentId: null } : {}),
+      ...(level === 'child' ? { parentId: { not: null } } : {}),
+    };
+    const keywordOr = buildKeywordOr(keyword, ['nameZh', 'nameEn', 'code']);
+    if (keywordOr) {
+      where.OR = keywordOr;
+    }
+
+    return this.findFilteredTree(where);
+  }
+
+  private async findFilteredTree(where: Record<string, unknown>) {
+    const matched = await this.prisma.category.findMany({
+      where,
+      select: { id: true, parentId: true },
     });
+    if (!matched.length) return [];
+
+    const ids = new Set(matched.map((item) => item.id));
+    for (const item of matched) {
+      if (item.parentId) ids.add(item.parentId);
+    }
+
+    const nodes = await this.prisma.category.findMany({
+      where: { id: { in: [...ids] } },
+      orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+      include: { i18n: true },
+    });
+
+    const map = new Map(
+      nodes.map((node) => [node.id, { ...node, children: [] as typeof nodes }]),
+    );
+    const roots: Array<(typeof nodes)[number] & { children: typeof nodes }> = [];
+
+    for (const node of map.values()) {
+      if (node.parentId && map.has(node.parentId)) {
+        map.get(node.parentId)!.children.push(node);
+      } else if (!node.parentId) {
+        roots.push(node);
+      }
+    }
+
+    return roots.map((node) => ({
+      ...node,
+      children: node.children.length ? node.children : undefined,
+    }));
   }
 
   findFlat() {

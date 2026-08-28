@@ -1,11 +1,10 @@
 import {
   Body,
   Controller,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
-  Query,
+  Post,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -20,13 +19,13 @@ import { InquiriesService } from './inquiries.service';
 export class InquiriesController {
   constructor(private readonly inquiriesService: InquiriesService) {}
 
-  @Get('list')
+  @Post('list')
   @Menus('lead:inquiry')
-  findAll(@Query() query: StatusPaginationDto) {
+  findAll(@Body() query: StatusPaginationDto) {
     return this.inquiriesService.findAll(query);
   }
 
-  @Get('detail/:id')
+  @Post('detail/:id')
   @Menus('lead:inquiry')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.inquiriesService.findOne(id);

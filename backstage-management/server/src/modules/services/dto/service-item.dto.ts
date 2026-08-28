@@ -7,6 +7,7 @@ import {
   IsString,
   Min,
 } from 'class-validator';
+import { ListFilterDto } from '../../../common/dto/list-filter.dto';
 
 export class CreateServiceItemDto {
   @ApiProperty({ example: 'warranty' })
@@ -50,3 +51,5 @@ export class CreateServiceItemDto {
 }
 
 export class UpdateServiceItemDto extends PartialType(CreateServiceItemDto) {}
+
+export class QueryServiceItemDto extends ListFilterDto {}

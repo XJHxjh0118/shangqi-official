@@ -42,6 +42,7 @@ import type {
 } from "@/components/SearchFilters/types";
 import ProductDetailDrawer from "@/components/ProductDetailDrawer.vue";
 import ProductImportDialog from "@/components/ProductImportDialog.vue";
+import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
 
 defineOptions({ name: "ProductList" });
 
@@ -124,6 +125,8 @@ const assetBatchPending = ref(0);
 const assetBatchUploading = ref(false);
 const assetBatchProgress = ref("");
 const pendingAssetFiles: File[] = [];
+/** 编辑时标记待删除的已入库素材，保存后再调用删除接口 */
+const removedAssetIds = ref<number[]>([]);
 let assetBatchTimer: ReturnType<typeof setTimeout> | null = null;
 const MAX_MANUAL_ASSETS = 3;
 const MAX_PACK_ASSETS = 3;
@@ -298,6 +301,7 @@ async function loadAssets(productId: number) {
 function resetForm() {
   editingId.value = null;
   assets.value = [];
+  removedAssetIds.value = [];
   pendingAssetFiles.splice(0, pendingAssetFiles.length);
   assetBatchPending.value = 0;
   assetBatchProgress.value = "";
@@ -331,6 +335,7 @@ function openCreate() {
 
 async function openEdit(row: any) {
   editingId.value = row.id;
+  removedAssetIds.value = [];
   const rows: I18nEntry[] = Array.isArray(row.i18n)
     ? row.i18n
     : Object.entries(row.i18n || {}).map(([locale, val]: any) => ({
@@ -417,12 +422,28 @@ function buildPayload() {
 }
 
 async function submit() {
+  if (!form.sku?.trim()) {
+    ElMessage.warning("请填写 SKU");
+    return;
+  }
+  if (!form.slug?.trim()) {
+    ElMessage.warning("请填写 Slug");
+    return;
+  }
+  if (!form.categoryId) {
+    ElMessage.warning("请选择分类");
+    return;
+  }
   const zhEntry = i18nEntries.value.find(e => e.locale === "zh");
+  if (!zhEntry?.name?.trim()) {
+    activeLocaleTab.value = "zh";
+    ElMessage.warning("请填写中文名");
+    return;
+  }
   const enEntry = i18nEntries.value.find(e => e.locale === "en");
-  if (!form.sku || !form.slug || !form.categoryId || !zhEntry?.name?.trim() || !enEntry?.name?.trim()) {
-    ElMessage.warning("请填写 SKU、Slug、分类以及中文、英文名称");
-    if (!zhEntry?.name?.trim()) activeLocaleTab.value = "zh";
-    else if (!enEntry?.name?.trim()) activeLocaleTab.value = "en";
+  if (!enEntry?.name?.trim()) {
+    activeLocaleTab.value = "en";
+    ElMessage.warning("请填写英文名");
     return;
   }
   const payload = buildPayload();
@@ -430,7 +451,32 @@ async function submit() {
     isRequiredLocale(e.locale)
   );
   if (editingId.value) {
-    await updateProduct(editingId.value, payload);
+    const productId = editingId.value;
+    await updateProduct(productId, payload);
+
+    if (removedAssetIds.value.length) {
+      await Promise.all(
+        removedAssetIds.value.map(assetId => deleteAsset(assetId))
+      );
+    }
+
+    const pending = assets.value.filter((a: any) => a._pending);
+    if (pending.length) {
+      await bindAssets(
+        productId,
+        pending.map((a: any, i: number) => ({
+          url: a.url,
+          thumbnailUrl: a.thumbnailUrl,
+          originalUrl: a.originalUrl,
+          type: a.type,
+          name: a.name,
+          size: a.size,
+          sort: i
+        }))
+      );
+    }
+
+    removedAssetIds.value = [];
     ElMessage.success("更新成功");
     dialogVisible.value = false;
   } else {
@@ -450,6 +496,7 @@ async function submit() {
         pending.map((a: any, i: number) => ({
           url: a.url,
           thumbnailUrl: a.thumbnailUrl,
+          originalUrl: a.originalUrl,
           type: a.type,
           name: a.name,
           size: a.size,
@@ -601,7 +648,7 @@ async function uploadCover(options: UploadRequestOptions) {
   try {
     // 不传 productId：拿到 URL 写入封面，随产品保存
     const res = await uploadAsset(file);
-    // 封面存原图，缩略图仅作后台预览，避免前台卡片/详情发糊
+    // 封面存展示图（1920 WebP），列表缩略图由 thumbnailUrl 提供
     const url = res.data?.url || res.data?.thumbnailUrl || "";
     if (!url) throw new Error("上传未返回地址");
     form.coverUrl = url;
@@ -616,6 +663,32 @@ async function uploadCover(options: UploadRequestOptions) {
   }
 }
 
+function mapUploadedToPending(list: any[]) {
+  const stamp = Date.now();
+  return list.map((item: any, i: number) => ({
+    id: `pending-${stamp}-${i}`,
+    _pending: true,
+    type: item.type || "OTHER",
+    url: item.url,
+    thumbnailUrl: item.thumbnailUrl,
+    originalUrl: item.originalUrl,
+    name: item.name,
+    size: item.size
+  }));
+}
+
+function applyPendingAssets(mapped: any[]) {
+  assets.value = [...assets.value, ...mapped];
+  if (!form.coverUrl) {
+    const firstImage = mapped.find((a: any) => a.type === "IMAGE");
+    if (firstImage?.url) {
+      form.coverUrl = firstImage.url;
+      form.coverName = firstImage.name || "";
+    }
+  }
+  syncPackUrlFromAssets();
+}
+
 async function flushProductAssetBatch() {
   if (!pendingAssetFiles.length || assetBatchUploading.value) {
     return;
@@ -625,49 +698,12 @@ async function flushProductAssetBatch() {
   assetBatchPending.value = files.length;
   assetBatchProgress.value = `正在上传 ${files.length} 个文件并生成缩略图…`;
   try {
-    const res = await uploadAssetsBatch(
-      files,
-      editingId.value || undefined
-    );
+    const res = await uploadAssetsBatch(files);
     const list = res.data?.list || [];
     const count = res.data?.count ?? list.length;
-
-    if (editingId.value) {
-      if (!form.coverUrl) {
-        const firstImage = list.find((a: any) => a.type === "IMAGE");
-        if (firstImage?.url) {
-          form.coverUrl = firstImage.url;
-          form.coverName = firstImage.name || "";
-        }
-      }
-      await loadAssets(editingId.value);
-      syncPackUrlFromAssets();
-      if (form.assetPackUrl) {
-        await updateProduct(editingId.value, {
-          assetPackUrl: form.assetPackUrl
-        });
-      }
-    } else {
-      // 新建：暂存到本地列表，保存产品时再绑定
-      const mapped = list.map((item: any, i: number) => ({
-        id: `pending-${Date.now()}-${i}`,
-        _pending: true,
-        type: item.type || "OTHER",
-        url: item.url,
-        thumbnailUrl: item.thumbnailUrl,
-        name: item.name,
-        size: item.size
-      }));
-      assets.value = [...assets.value, ...mapped];
-      if (!form.coverUrl) {
-        const firstImage = mapped.find((a: any) => a.type === "IMAGE");
-        if (firstImage?.url) {
-          form.coverUrl = firstImage.url;
-          form.coverName = firstImage.name || "";
-        }
-      }
-    }
-    ElMessage.success(`已上传 ${count} 个素材，缩略图已自动生成`);
+    const mapped = mapUploadedToPending(list);
+    applyPendingAssets(mapped);
+    ElMessage.success(`已上传 ${count} 个素材，保存产品后生效`);
   } catch (e: any) {
     ElMessage.error(e?.message || "素材批量上传失败");
     throw e;
@@ -883,30 +919,38 @@ function assetPreviewUrl(asset: any) {
 
 async function onRemoveAsset(asset: any) {
   await ElMessageBox.confirm(
-    `确认删除素材「${asset.name || assetLabel(asset)}」？`,
+    `确认移除素材「${asset.name || assetLabel(asset)}」？保存后生效。`,
     "提示",
     { type: "warning" }
   );
   if (asset._legacy || asset.id === "legacy-pack") {
     form.assetPackUrl = "";
-    ElMessage.success("已移除");
+    ElMessage.success("已移除，保存后生效");
     return;
   }
   if (asset._pending || typeof asset.id === "string") {
     assets.value = assets.value.filter((a: any) => a.id !== asset.id);
     syncPackUrlFromAssets();
+    clearCoverIfMatches(asset);
     ElMessage.success("已移除");
     return;
   }
-  await deleteAsset(asset.id);
-  if (editingId.value) {
-    await loadAssets(editingId.value);
-    syncPackUrlFromAssets();
-    await updateProduct(editingId.value, {
-      assetPackUrl: form.assetPackUrl || null
-    });
+  if (typeof asset.id === "number" && !removedAssetIds.value.includes(asset.id)) {
+    removedAssetIds.value.push(asset.id);
   }
-  ElMessage.success("已删除");
+  assets.value = assets.value.filter((a: any) => a.id !== asset.id);
+  syncPackUrlFromAssets();
+  clearCoverIfMatches(asset);
+  ElMessage.success("已标记移除，保存后生效");
+}
+
+function clearCoverIfMatches(asset: any) {
+  const assetUrl = asset.url || asset.thumbnailUrl || "";
+  if (!form.coverUrl || !assetUrl) return;
+  if (toDisplayUrl(form.coverUrl) === toDisplayUrl(assetUrl)) {
+    form.coverUrl = "";
+    form.coverName = "";
+  }
 }
 
 function vehicleLabel(row: any) {
@@ -1118,6 +1162,7 @@ onMounted(async () => {
       align-center
       destroy-on-close
       append-to-body
+      @closed="resetForm"
     >
       <div class="product-dialog-body">
         <el-form label-width="96px" class="product-form">
@@ -1319,14 +1364,15 @@ onMounted(async () => {
                 :disabled="coverUploading"
               >
                 <div class="tile-inner">
-                  <el-image
+                  <MediaPreviewTile
                     v-if="form.coverUrl && !coverUploading"
                     :src="toDisplayUrl(form.coverUrl)"
-                    fit="cover"
-                    class="tile-preview"
-                    :preview-src-list="[toDisplayUrl(form.coverUrl)]"
-                    preview-teleported
+                    type="image"
+                    embedded
+                    :show-name="false"
+                    :show-badge="false"
                     @click.stop
+                    @remove="clearCover"
                   />
                   <template v-else>
                     <span class="asset-drop-icon" aria-hidden="true">⬆</span>
@@ -1336,16 +1382,6 @@ onMounted(async () => {
                   </template>
                 </div>
               </el-upload>
-              <el-button
-                v-if="form.coverUrl"
-                link
-                type="danger"
-                size="small"
-                class="tile-clear"
-                @click="clearCover"
-              >
-                清除
-              </el-button>
             </div>
 
             <div class="media-field media-field--assets">
@@ -1371,32 +1407,22 @@ onMounted(async () => {
                   </div>
                 </el-upload>
                 <div v-if="imageAssets.length" class="asset-grid">
-                  <div
-                    v-for="asset in imageAssets"
+                  <MediaPreviewTile
+                    v-for="(asset, index) in imageAssets"
                     :key="asset.id"
-                    class="asset-item"
+                    :src="assetPreviewUrl(asset)"
+                    type="image"
+                    badge="产品图"
+                    :name="asset.name || '产品图'"
+                    :preview-list="
+                      imageAssets.map((a: any) =>
+                        toDisplayUrl(a.url || a.thumbnailUrl)
+                      )
+                    "
+                    :preview-index="index"
+                    @remove="onRemoveAsset(asset)"
                   >
-                    <div class="asset-thumb-wrap">
-                      <el-image
-                        :src="assetPreviewUrl(asset)"
-                        fit="cover"
-                        class="asset-thumb"
-                        :preview-src-list="
-                          imageAssets.map((a: any) =>
-                            toDisplayUrl(a.url || a.thumbnailUrl)
-                          )
-                        "
-                        :initial-index="
-                          imageAssets.findIndex((a: any) => a.id === asset.id)
-                        "
-                        preview-teleported
-                      />
-                      <span class="asset-badge">产品图</span>
-                    </div>
-                    <p class="asset-name" :title="asset.name">
-                      {{ asset.name || "产品图" }}
-                    </p>
-                    <div class="asset-actions">
+                    <template #actions>
                       <el-button
                         link
                         type="primary"
@@ -1405,16 +1431,8 @@ onMounted(async () => {
                       >
                         设为封面
                       </el-button>
-                      <el-button
-                        link
-                        type="danger"
-                        size="small"
-                        @click="onRemoveAsset(asset)"
-                      >
-                        删除
-                      </el-button>
-                    </div>
-                  </div>
+                    </template>
+                  </MediaPreviewTile>
                 </div>
               </div>
               <p v-if="assetBatchProgress" class="asset-progress">
@@ -1438,13 +1456,16 @@ onMounted(async () => {
                   :disabled="promoVideoUploading"
                 >
                   <div class="tile-inner">
-                    <video
+                    <MediaPreviewTile
                       v-if="form.promoVideoUrl && !promoVideoUploading"
-                      class="tile-preview"
-                      preload="metadata"
-                      muted
                       :src="toDisplayUrl(form.promoVideoUrl)"
+                      type="video"
+                      embedded
+                      :name="form.promoVideoName || '宣传视频'"
+                      :show-name="false"
+                      :show-badge="false"
                       @click.stop
+                      @remove="clearPromoVideo"
                     />
                     <template v-else>
                       <span class="asset-drop-icon" aria-hidden="true">⬆</span>
@@ -1454,16 +1475,6 @@ onMounted(async () => {
                     </template>
                   </div>
                 </el-upload>
-                <el-button
-                  v-if="form.promoVideoUrl"
-                  link
-                  type="danger"
-                  size="small"
-                  class="tile-clear"
-                  @click="clearPromoVideo"
-                >
-                  清除
-                </el-button>
               </div>
 
               <div class="media-field">
@@ -1481,13 +1492,16 @@ onMounted(async () => {
                   :disabled="installVideoUploading"
                 >
                   <div class="tile-inner">
-                    <video
+                    <MediaPreviewTile
                       v-if="form.installVideoUrl && !installVideoUploading"
-                      class="tile-preview"
-                      preload="metadata"
-                      muted
                       :src="toDisplayUrl(form.installVideoUrl)"
+                      type="video"
+                      embedded
+                      :name="form.installVideoName || '安装示范视频'"
+                      :show-name="false"
+                      :show-badge="false"
                       @click.stop
+                      @remove="clearInstallVideo"
                     />
                     <template v-else>
                       <span class="asset-drop-icon" aria-hidden="true">⬆</span>
@@ -1497,16 +1511,6 @@ onMounted(async () => {
                     </template>
                   </div>
                 </el-upload>
-                <el-button
-                  v-if="form.installVideoUrl"
-                  link
-                  type="danger"
-                  size="small"
-                  class="tile-clear"
-                  @click="clearInstallVideo"
-                >
-                  清除
-                </el-button>
               </div>
             </div>
 
@@ -1818,38 +1822,6 @@ onMounted(async () => {
   gap: 4px;
   width: 104px;
   height: 104px;
-}
-
-.tile-preview {
-  width: 104px;
-  height: 104px;
-  object-fit: cover;
-  display: block;
-}
-
-.tile-preview :deep(.el-image__inner) {
-  width: 104px;
-  height: 104px;
-  object-fit: cover;
-}
-
-.tile-pack {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--el-color-primary);
-  text-decoration: none;
-  background: var(--el-fill-color-light);
-}
-
-.tile-clear {
-  padding: 0;
-  height: auto;
-  min-height: 0;
 }
 
 .asset-drop-icon {

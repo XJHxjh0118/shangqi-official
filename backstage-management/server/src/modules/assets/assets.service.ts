@@ -8,6 +8,7 @@ import { AssetType } from '@prisma/client';
 import { existsSync, mkdirSync, statSync, writeFileSync } from 'fs';
 import { extname, join } from 'path';
 import sharp from 'sharp';
+import { processImageUpload } from './image-processor';
 import { serializeProduct } from '../products/product-media';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -88,27 +89,28 @@ export class AssetsService {
       file.originalname,
       explicitName,
     );
-    const filename = this.uniqueName(originalName);
-    const absPath = join(this.uploadDir, filename);
     const type = this.detectType(file.mimetype, originalName);
+    let url: string;
     let thumbnailUrl: string | undefined;
+    let originalUrl: string | undefined;
+    let size: number | null = file.size || file.buffer?.length || null;
 
     if (type === AssetType.IMAGE) {
-      // 高清原图：最长边不超过 4096，不放大；另生成 400 缩略图
-      await sharp(file.buffer)
-        .rotate()
-        .resize(4096, 4096, { fit: 'inside', withoutEnlargement: true })
-        .toFile(absPath);
-
-      const thumbName = `thumb-${filename}`;
-      const thumbPath = join(this.uploadDir, thumbName);
-      await sharp(file.buffer)
-        .rotate()
-        .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
-        .toFile(thumbPath);
-      thumbnailUrl = `${this.publicBase}/uploads/${thumbName}`;
+      const processed = await processImageUpload(
+        file.buffer,
+        this.uploadDir,
+        file.mimetype,
+        originalName,
+      );
+      url = `${this.publicBase}/uploads/${processed.displayFilename}`;
+      thumbnailUrl = `${this.publicBase}/uploads/${processed.thumbFilename}`;
+      originalUrl = `${this.publicBase}/uploads/${processed.originalFilename}`;
+      size = processed.displaySize;
     } else {
+      const filename = this.uniqueName(originalName);
+      const absPath = join(this.uploadDir, filename);
       writeFileSync(absPath, file.buffer);
+      url = `${this.publicBase}/uploads/${filename}`;
       if (type === AssetType.PDF) {
         thumbnailUrl = await this.createLabelThumbnail('PDF', filename, '#e60012');
       } else if (type === AssetType.VIDEO) {
@@ -120,15 +122,13 @@ export class AssetsService {
       ) {
         thumbnailUrl = await this.createLabelThumbnail('ZIP', filename, '#67c23a');
       }
+      size = existsSync(absPath) ? statSync(absPath).size : size;
     }
 
-    const size = existsSync(absPath)
-      ? statSync(absPath).size
-      : file.size || file.buffer?.length || null;
-
     return {
-      url: `${this.publicBase}/uploads/${filename}`,
+      url,
       thumbnailUrl,
+      originalUrl,
       type,
       name: originalName,
       size,
@@ -159,6 +159,7 @@ export class AssetsService {
         type: saved.type,
         url: saved.url,
         thumbnailUrl: saved.thumbnailUrl,
+        originalUrl: saved.originalUrl,
         name: saved.name,
         size: saved.size ?? undefined,
         sort,
@@ -211,6 +212,7 @@ export class AssetsService {
           type: saved.type,
           url: saved.url,
           thumbnailUrl: saved.thumbnailUrl,
+          originalUrl: saved.originalUrl,
           name: saved.name,
           size: saved.size ?? undefined,
           sort: existingCount + i,
@@ -236,6 +238,7 @@ export class AssetsService {
     items: Array<{
       url: string;
       thumbnailUrl?: string | null;
+      originalUrl?: string | null;
       type?: AssetType;
       name?: string | null;
       size?: number | null;
@@ -267,6 +270,7 @@ export class AssetsService {
           type,
           url: item.url,
           thumbnailUrl: item.thumbnailUrl || undefined,
+          originalUrl: item.originalUrl || undefined,
           name: item.name || undefined,
           size: item.size ?? undefined,
           sort: item.sort ?? existingCount + i,

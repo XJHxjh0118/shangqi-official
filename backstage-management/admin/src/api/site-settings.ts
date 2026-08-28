@@ -26,7 +26,7 @@ export type SiteSettings = {
 
 export const getSiteSettings = () =>
   http.request<{ code: number; data: SiteSettings; msg: string }>(
-    "get",
+    "post",
     "/cms/site-settings/detail"
   );
 

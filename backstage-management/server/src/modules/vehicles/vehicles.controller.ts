@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -10,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
-import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicle.dto';
+import { CreateVehicleDto, QueryVehicleDto, UpdateVehicleDto } from './dto/vehicle.dto';
 import { VehiclesService } from './vehicles.service';
 
 @ApiTags('Vehicles')
@@ -19,9 +18,9 @@ import { VehiclesService } from './vehicles.service';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  @Get('list')
-  findAll() {
-    return this.vehiclesService.findAll();
+  @Post('list')
+  findAll(@Body() query: QueryVehicleDto) {
+    return this.vehiclesService.findAll(query);
   }
 
   @Post('add')

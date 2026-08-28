@@ -4,14 +4,32 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicle.dto';
+import {
+  buildKeywordOr,
+  parseOptionalBoolean,
+} from '../../common/query.util';
+import { CreateVehicleDto, QueryVehicleDto, UpdateVehicleDto } from './dto/vehicle.dto';
 
 @Injectable()
 export class VehiclesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(query: QueryVehicleDto = {}) {
+    const keyword = query.keyword?.trim();
+    const enabled = parseOptionalBoolean(query.enabled);
+    const keywordOr = buildKeywordOr(keyword, [
+      'code',
+      'brandZh',
+      'brandEn',
+      'modelZh',
+      'modelEn',
+    ]);
+
     return this.prisma.vehicle.findMany({
+      where: {
+        ...(enabled !== undefined ? { enabled } : {}),
+        ...(keywordOr ? { OR: keywordOr } : {}),
+      },
       orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     });
   }

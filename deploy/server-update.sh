@@ -133,7 +133,8 @@ if [ -f "$RELEASE_DIR/admin.tar.gz" ]; then
   mkdir -p "$ADMIN_DIR"
   TMP="$(mktemp -d)"
   tar -xzf "$RELEASE_DIR/admin.tar.gz" -C "$TMP"
-  sync_tree "$TMP" "$ADMIN_DIR"
+  # 保留宝塔 .user.ini（常带不可变属性，强删会失败）
+  sync_tree "$TMP" "$ADMIN_DIR" .user.ini
   rm -rf "$TMP"
 fi
 

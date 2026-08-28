@@ -12,6 +12,55 @@ import type {
 import { stringify } from "qs";
 import { getToken, formatToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import { message } from "@/utils/message";
+
+type ApiBody = {
+  code?: number;
+  msg?: string;
+  message?: string | string[];
+};
+
+function extractApiMessage(body: unknown, fallback = "请求失败") {
+  if (!body || typeof body !== "object") return fallback;
+  const payload = body as ApiBody;
+  if (typeof payload.msg === "string" && payload.msg.trim()) {
+    return payload.msg.trim();
+  }
+  if (typeof payload.message === "string" && payload.message.trim()) {
+    return payload.message.trim();
+  }
+  if (Array.isArray(payload.message)) {
+    const joined = payload.message
+      .map(item => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean)
+      .join("；");
+    if (joined) return joined;
+  }
+  return fallback;
+}
+
+function isApiEnvelope(body: unknown): body is ApiBody & { code: number } {
+  return Boolean(body && typeof body === "object" && "code" in body);
+}
+
+function shouldSkipErrorToast(config?: PureHttpRequestConfig) {
+  return Boolean(config?.skipGlobalErrorHandler);
+}
+
+function notifyApiError(msg: string) {
+  message(msg, { type: "error", grouping: true });
+}
+
+function isBinaryResponse(response: PureHttpResponse) {
+  const responseType = response.config?.responseType;
+  const data = response.data;
+  return (
+    responseType === "blob" ||
+    responseType === "arraybuffer" ||
+    data instanceof Blob ||
+    data instanceof ArrayBuffer
+  );
+}
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
@@ -151,19 +200,43 @@ class PureHttp {
           PureHttp.initConfig.beforeResponseCallback(response);
           return response.data;
         }
-        return response.data;
+
+        if (isBinaryResponse(response)) {
+          return response.data;
+        }
+
+        const data = response.data;
+        if (isApiEnvelope(data) && data.code !== 200) {
+          const apiMsg = extractApiMessage(data);
+          if (!shouldSkipErrorToast($config)) {
+            notifyApiError(apiMsg);
+          }
+          return Promise.reject(
+            Object.assign(new Error(apiMsg), {
+              response,
+              data,
+              config: $config,
+              isCancelRequest: false,
+              apiMsgShown: true
+            })
+          );
+        }
+
+        return data;
       },
       (error: PureHttpError) => {
         const $error = error;
         $error.isCancelRequest = Axios.isCancel($error);
-        const body = $error.response?.data as
-          | { code?: number; msg?: string; message?: string }
-          | undefined;
-        const apiMsg = body?.msg || body?.message;
-        if (typeof apiMsg === "string" && apiMsg.trim()) {
+        const body = $error.response?.data;
+        const apiMsg = extractApiMessage(body, "");
+        if (apiMsg) {
           $error.message = apiMsg;
-        } else if (Array.isArray(apiMsg) && apiMsg.length) {
-          $error.message = apiMsg.join("；");
+        }
+        if (!shouldSkipErrorToast($error.config) && !($error as any).apiMsgShown) {
+          notifyApiError(
+            apiMsg || $error.message || "网络异常，请稍后重试"
+          );
+          ($error as any).apiMsgShown = true;
         }
         return Promise.reject($error);
       }

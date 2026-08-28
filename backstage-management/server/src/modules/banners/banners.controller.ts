@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -13,6 +12,7 @@ import { Menus } from '../../common/decorators/menus.decorator';
 import { BannersService } from './banners.service';
 import {
   CreateBannerDto,
+  QueryBannerDto,
   ReorderBannersDto,
   UpdateBannerDto,
 } from './dto/banner.dto';
@@ -23,9 +23,9 @@ import {
 export class BannersController {
   constructor(private readonly bannersService: BannersService) {}
 
-  @Get('list')
-  findAll() {
-    return this.bannersService.findAll();
+  @Post('list')
+  findAll(@Body() query: QueryBannerDto) {
+    return this.bannersService.findAll(query);
   }
 
   @Post('add')

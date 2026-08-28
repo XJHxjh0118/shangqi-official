@@ -14,6 +14,7 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
+import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
 
 defineOptions({ name: "CmsVehicle" });
 
@@ -143,8 +144,12 @@ function clearImage() {
 }
 
 async function submit() {
-  if (!form.vehicleId || !form.imageUrl) {
-    ElMessage.warning("请选择车型并上传展示图");
+  if (!form.vehicleId) {
+    ElMessage.warning("请选择车型");
+    return;
+  }
+  if (!form.imageUrl) {
+    ElMessage.warning("请上传展示图");
     return;
   }
   const payload = {
@@ -260,24 +265,16 @@ onMounted(fetchList);
         </el-form-item>
         <el-form-item label="展示图" required>
           <div class="image-upload">
-            <div v-if="form.imageUrl" class="image-preview">
-              <el-image
-                :src="toDisplayUrl(form.imageUrl)"
-                fit="cover"
-                style="width: 240px; height: 120px; border-radius: 6px"
-                :preview-src-list="[toDisplayUrl(form.imageUrl)]"
-                preview-teleported
-              />
-              <el-button
-                class="mt-2"
-                size="small"
-                type="danger"
-                plain
-                @click="clearImage"
-              >
-                清除图片
-              </el-button>
-            </div>
+            <MediaPreviewTile
+              v-if="form.imageUrl"
+              :src="toDisplayUrl(form.imageUrl)"
+              type="image"
+              :width="240"
+              :height="120"
+              :show-name="false"
+              :show-badge="false"
+              @remove="clearImage"
+            />
             <el-upload
               :show-file-list="false"
               accept="image/*"
@@ -319,12 +316,6 @@ onMounted(fetchList);
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-}
-
-.image-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 .upload-tip {

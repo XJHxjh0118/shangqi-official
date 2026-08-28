@@ -3,11 +3,9 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Post,
-  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -40,7 +38,7 @@ function sendExcel(res: Response, buffer: Buffer, filename: string, asciiFallbac
 
 function parseExportIds(raw?: string) {
   return String(raw || '')
-    .split(/[,，\s]+/)
+    .split(/[,?\s]+/)
     .map((item) => Number(item))
     .filter((id) => Number.isInteger(id) && id > 0);
 }
@@ -51,7 +49,7 @@ function parseExportIds(raw?: string) {
 export class ExportImportController {
   constructor(private readonly service: ExportImportService) {}
 
-  @Get('import-template')
+  @Post('import-template')
   @Menus('product:list')
   async downloadTemplate(@Res() res: Response) {
     const buffer = await this.service.buildTemplate();
@@ -59,17 +57,17 @@ export class ExportImportController {
     sendExcel(
       res,
       buffer,
-      `产品导入模板_${stamp}.xlsx`,
+      `??????_${stamp}.xlsx`,
       `product-import-template-${stamp}.xlsx`,
     );
   }
 
-  @Get('export')
+  @Post('export')
   @Menus('product:list')
-  async exportProducts(@Query('ids') ids: string, @Res() res: Response) {
+  async exportProducts(@Res() res: Response, @Body('ids') ids?: string) {
     const buffer = await this.service.exportProducts(parseExportIds(ids));
     const stamp = excelStamp();
-    sendExcel(res, buffer, `产品导出_${stamp}.xlsx`, `products-${stamp}.xlsx`);
+    sendExcel(res, buffer, `????_${stamp}.xlsx`, `products-${stamp}.xlsx`);
   }
 
   @Post('import')
@@ -89,7 +87,7 @@ export class ExportImportController {
   )
   importProducts(@UploadedFile() file: Express.Multer.File) {
     if (!file?.buffer?.length) {
-      throw new BadRequestException('请上传 Excel 文件（.xlsx / .xls）');
+      throw new BadRequestException('??? Excel ???.xlsx / .xls?');
     }
     return this.service.previewImport(file.buffer);
   }

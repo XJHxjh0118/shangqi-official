@@ -1,8 +1,10 @@
 import { http } from "@/utils/http";
+import type { ListQueryParams } from "@/utils/list-query";
 
 type Result<T = any> = { code: number; data: T; msg: string };
 
-export const getBanners = () => http.request<Result>("get", "/cms/banner/list");
+export const getBanners = (params?: ListQueryParams) =>
+  http.request<Result>("post", "/cms/banner/list", { data: params });
 
 export const createBanner = (data: object) =>
   http.request<Result>("post", "/cms/banner/add", { data });

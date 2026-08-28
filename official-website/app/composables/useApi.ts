@@ -65,15 +65,15 @@ export function useApi() {
     opts?: Parameters<typeof $fetch>[1] & { accessToken?: string | null },
   ): Promise<T> {
     try {
-      const method = String(opts?.method || 'GET').toUpperCase()
+      const method = String(opts?.method || 'POST').toUpperCase()
       const { accessToken, ...fetchOpts } = opts || {}
       const authToken = accessToken || token.value
 
       const res = await $fetch<ApiEnvelope<T> | T>(`${requestBase}${path}`, {
         timeout: apiTimeout,
-        retry: method === 'GET' ? 1 : 0,
-        retryStatusCodes: [408, 429, 502, 503, 504],
+        retry: 0,
         ...fetchOpts,
+        method,
         onRequest(ctx) {
           if (typeof fetchOpts.onRequest === 'function') {
             fetchOpts.onRequest(ctx)
@@ -111,11 +111,27 @@ export function useApi() {
       }
       console.error('[api:error]', {
         path,
-        method: opts?.method || 'GET',
+        method: opts?.method || 'POST',
         error,
       })
       throw error
     }
+  }
+
+  async function downloadAssetPack(slug: string, filename?: string) {
+    const authToken = token.value
+    const blob = await $fetch<Blob>(`${requestBase}${paths.assetPack(slug)}`, {
+      method: 'POST',
+      responseType: 'blob',
+      timeout: apiTimeout,
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+    })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = filename || `${slug}-asset-pack.zip`
+    anchor.click()
+    URL.revokeObjectURL(url)
   }
 
   return {
@@ -138,18 +154,18 @@ export function useApi() {
     getServices: () => apiFetch<ApiServiceItem[]>(paths.services),
 
     getPageSeo: (pageKey: string) =>
-      apiFetch<ApiPageSeo>(paths.seo, { query: { pageKey } }),
+      apiFetch<ApiPageSeo>(paths.seo, { body: { pageKey } }),
 
     getShare: (shareToken: string) =>
       apiFetch<SharePage>(paths.share(shareToken)),
 
     getProducts: (query: ProductQuery = {}) =>
-      apiFetch<ApiProductList>(paths.products, { query }),
+      apiFetch<ApiProductList>(paths.products, { body: query }),
 
     getProductBySlug: (slug: string) =>
       apiFetch<ApiProduct>(paths.productDetail(slug)),
 
-    productAssetPackUrl: (slug: string) => `${apiBase}${paths.assetPack(slug)}`,
+    downloadProductAssetPack: downloadAssetPack,
 
     createInquiry: (body: CreateInquiryPayload) =>
       apiFetch(paths.inquiry, { method: 'POST', body }),
@@ -188,6 +204,6 @@ export function useApi() {
         status?: string
         keyword?: string
       } = {},
-    ) => apiFetch<MyInquiryList>(paths.myInquiries, { query }),
+    ) => apiFetch<MyInquiryList>(paths.myInquiries, { body: query }),
   }
 }

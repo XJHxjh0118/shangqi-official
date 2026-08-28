@@ -1,9 +1,10 @@
 import { http } from "@/utils/http";
+import type { ListQueryParams } from "@/utils/list-query";
 
 type Result<T = any> = { code: number; data: T; msg: string };
 
-export const getServiceItems = () =>
-  http.request<Result>("get", "/cms/service/list");
+export const getServiceItems = (params?: ListQueryParams) =>
+  http.request<Result>("post", "/cms/service/list", { data: params });
 
 export const createServiceItem = (data: object) =>
   http.request<Result>("post", "/cms/service/add", { data });

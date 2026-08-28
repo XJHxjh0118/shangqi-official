@@ -9,15 +9,27 @@ import {
   syncTitleZhEn,
 } from '../../common/i18n.util';
 import { parseOptionalDate } from '../../common/date.util';
+import {
+  buildKeywordOr,
+  parseOptionalBoolean,
+} from '../../common/query.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateBannerDto, UpdateBannerDto } from './dto/banner.dto';
+import { CreateBannerDto, QueryBannerDto, UpdateBannerDto } from './dto/banner.dto';
 
 @Injectable()
 export class BannersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(query: QueryBannerDto = {}) {
+    const keyword = query.keyword?.trim();
+    const enabled = parseOptionalBoolean(query.enabled);
+    const keywordOr = buildKeywordOr(keyword, ['titleZh', 'titleEn', 'linkUrl']);
+
     return this.prisma.banner.findMany({
+      where: {
+        ...(enabled !== undefined ? { enabled } : {}),
+        ...(keywordOr ? { OR: keywordOr } : {}),
+      },
       orderBy: [{ sort: 'asc' }, { id: 'desc' }],
       include: { i18n: true },
     });

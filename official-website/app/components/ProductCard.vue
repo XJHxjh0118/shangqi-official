@@ -46,7 +46,13 @@ const specLine = computed(() => {
     prefetch
   >
     <div class="media-well">
-      <img :src="product.images[0]" :alt="name" width="640" height="480" />
+      <img
+        :src="product.previewImages[0] || product.images[0]"
+        :alt="name"
+        width="640"
+        height="480"
+        loading="lazy"
+      />
       <ProductFlags :tags="product.tags" />
     </div>
     <div class="product-card-copy">

@@ -14,7 +14,7 @@ export type ContactPerson = {
 };
 
 export const getContacts = () =>
-  http.request<Result<ContactPerson[]>>("get", "/contact/list");
+  http.request<Result<ContactPerson[]>>("post", "/contact/list");
 
 export const createContact = (data: Partial<ContactPerson>) =>
   http.request<Result>("post", "/contact/add", { data });

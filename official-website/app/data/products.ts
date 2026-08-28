@@ -34,6 +34,8 @@ export type Product = {
   seoKeywords: { zh: string; en: string }
   seoDescription: { zh: string; en: string }
   images: string[]
+  previewImages: string[]
+  originalImages: string[]
   video?: string
   promoVideo?: string
   installVideo?: string

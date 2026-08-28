@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -22,7 +21,7 @@ import { SharesService } from './shares.service';
 export class SharesController {
   constructor(private readonly sharesService: SharesService) {}
 
-  @Get('list')
+  @Post('list')
   findAll(@CurrentUser() user: { id: number; role: string }) {
     return this.sharesService.findAll(user);
   }

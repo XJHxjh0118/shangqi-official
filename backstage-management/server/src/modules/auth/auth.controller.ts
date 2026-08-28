@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -59,14 +59,14 @@ export class AuthController {
   }
 
   @Public()
-  @Get('async-routes')
+  @Post('async-routes')
   @ApiOperation({ summary: '异步路由（业务路由由前端静态注册）' })
   asyncRoutes() {
     return [];
   }
 
   @ApiBearerAuth()
-  @Get('profile')
+  @Post('profile')
   @ApiOperation({ summary: '当前用户信息' })
   profile(@CurrentUser() user: { id: number }) {
     return this.authService.profile(user.id);
@@ -93,11 +93,11 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Get('inquiries')
+  @Post('inquiries')
   @ApiOperation({ summary: '当前账号的历史询盘' })
   myInquiries(
     @CurrentUser() user: { id: number },
-    @Query() query: StatusPaginationDto,
+    @Body() query: StatusPaginationDto,
   ) {
     return this.inquiriesService.findMine(user.id, query);
   }

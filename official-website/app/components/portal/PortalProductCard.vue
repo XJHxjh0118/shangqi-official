@@ -14,7 +14,9 @@ const cardRef = ref<HTMLElement | null>(null)
 usePortalCardTilt(cardRef)
 
 const name = computed(() => getLocalized(props.product.name, locale.value))
-const image = computed(() => props.product.images[0] || '')
+const image = computed(
+  () => props.product.previewImages[0] || props.product.images[0] || '',
+)
 const material = computed(() => getLocalized(props.product.material, locale.value))
 
 const categoryLabel = computed(() => {

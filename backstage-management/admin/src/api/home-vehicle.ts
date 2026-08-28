@@ -3,10 +3,10 @@ import { http } from "@/utils/http";
 type Result<T = any> = { code: number; data: T; msg: string };
 
 export const getHomeVehicles = () =>
-  http.request<Result>("get", "/cms/vehicle/list");
+  http.request<Result>("post", "/cms/vehicle/list");
 
 export const getHomeVehicleOptions = () =>
-  http.request<Result>("get", "/cms/vehicle/options");
+  http.request<Result>("post", "/cms/vehicle/options");
 
 export const createHomeVehicle = (data: object) =>
   http.request<Result>("post", "/cms/vehicle/add", { data });

@@ -8,7 +8,7 @@ export async function useProductDetailPage() {
   const localePath = useLocalePath()
   const { toggleItem, has: inInquiry } = useInquiryList()
   const { toggle, has } = useFavorites()
-  const { apiBase, getProductBySlug, getProducts, productAssetPackUrl } = useApi()
+  const { apiBase, getProductBySlug, getProducts, downloadProductAssetPack } = useApi()
 
   const slug = computed(() => String(route.params.slug))
 
@@ -102,6 +102,23 @@ export async function useProductDetailPage() {
       product.value?.images[0] ||
       '',
   )
+  const activePreviewSrc = computed(
+    () =>
+      product.value?.previewImages[activeImage.value] ||
+      product.value?.previewImages[0] ||
+      activeSrc.value,
+  )
+  const activeOriginalSrc = computed(
+    () =>
+      product.value?.originalImages[activeImage.value] ||
+      product.value?.originalImages[0] ||
+      '',
+  )
+  const canDownloadOriginal = computed(() => {
+    const original = activeOriginalSrc.value
+    const display = activeSrc.value
+    return Boolean(original && display && original !== display)
+  })
   const favorited = computed(() =>
     product.value ? has(product.value.id) : false,
   )
@@ -130,10 +147,13 @@ export async function useProductDetailPage() {
     image: () => product.value?.images[0],
   })
 
-  const assetPackHref = computed(() => {
-    if (!product.value?.hasAssetPack) return ''
-    return productAssetPackUrl(product.value.slug)
-  })
+  const hasLegacyAssetPack = computed(() => Boolean(product.value?.hasAssetPack))
+
+  async function onDownloadAssetPack() {
+    const p = product.value
+    if (!p?.hasAssetPack) return
+    await downloadProductAssetPack(p.slug, `${p.sku}-assets.zip`)
+  }
 
   function onAddInquiry() {
     const p = product.value
@@ -188,10 +208,14 @@ export async function useProductDetailPage() {
     description,
     activeImage,
     activeSrc,
+    activePreviewSrc,
+    activeOriginalSrc,
+    canDownloadOriginal,
     added,
     favorited,
     pending,
-    assetPackHref,
+    hasLegacyAssetPack,
+    onDownloadAssetPack,
     onAddInquiry,
     onToggleFavorite,
     setActiveImage,

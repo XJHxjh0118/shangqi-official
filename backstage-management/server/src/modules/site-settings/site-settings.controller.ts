@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Body, Controller, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
 import { UpdateSiteSettingsDto } from './dto/site-settings.dto';
@@ -10,7 +10,7 @@ import { SiteSettingsService } from './site-settings.service';
 export class SiteSettingsController {
   constructor(private readonly service: SiteSettingsService) {}
 
-  @Get('detail')
+  @Post('detail')
   @Menus('cms:banner', 'cms:featured', 'cms:new-hot', 'cms:service', 'seo:pages')
   @ApiOperation({ summary: '获取站点配置' })
   get() {

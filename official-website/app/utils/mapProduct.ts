@@ -56,6 +56,16 @@ function mapFileList(
     .filter((item) => item.url)
 }
 
+/** 由展示图 URL 推导缩略图（兼容旧数据） */
+function displayToPreview(displayUrl: string) {
+  if (!displayUrl) return ''
+  if (displayUrl.includes('/disp-')) {
+    return displayUrl.replace('/disp-', '/thumb-')
+  }
+  if (displayUrl.includes('/thumb-')) return displayUrl
+  return displayUrl
+}
+
 function resolveCoverUrl(product: ApiProduct, apiBase: string): string {
   const rawCover = product.cover?.url
   if (!rawCover) return ''
@@ -65,33 +75,96 @@ function resolveCoverUrl(product: ApiProduct, apiBase: string): string {
 
   const imageAssets = product.materials || []
   for (const asset of imageAssets) {
-    const full = resolveAssetUrl(asset.url, apiBase)
-    if (!full) continue
-    if (cover === full) return full
+    const display = resolveAssetUrl(asset.url, apiBase)
+    if (!display) continue
+    if (cover === display) return display
   }
 
+  // 旧数据：封面误存了缩略图地址
   if (cover.includes('/thumb-')) {
-    const fullGuess = cover.replace('/thumb-', '/')
-    if (imageAssets.some((a) => resolveAssetUrl(a.url, apiBase) === fullGuess)) {
-      return fullGuess
+    const displayGuess = cover.replace('/thumb-', '/disp-')
+    if (
+      imageAssets.some(
+        (a) => resolveAssetUrl(a.url, apiBase) === displayGuess,
+      )
+    ) {
+      return displayGuess
+    }
+    const legacyGuess = cover.replace('/thumb-', '/')
+    if (
+      imageAssets.some((a) => resolveAssetUrl(a.url, apiBase) === legacyGuess)
+    ) {
+      return legacyGuess
     }
   }
 
   return cover
 }
 
+function resolveCoverPreview(
+  product: ApiProduct,
+  cover: string,
+  apiBase: string,
+): string {
+  if (!cover) return ''
+  const matched = (product.materials || []).find(
+    (asset) => resolveAssetUrl(asset.url, apiBase) === cover,
+  )
+  if (matched?.thumbnailUrl) {
+    return resolveAssetUrl(matched.thumbnailUrl, apiBase) || displayToPreview(cover)
+  }
+  return displayToPreview(cover)
+}
+
 export function mapApiProduct(product: ApiProduct, apiBase: string): Product {
+  const materials = product.materials || []
   const cover = resolveCoverUrl(product, apiBase)
-  const imagesFromAssets = (product.materials || [])
+
+  const imagesFromAssets = materials
     .map((a) => resolveAssetUrl(a.url, apiBase))
+    .filter(Boolean)
+  const previewFromAssets = materials
+    .map((a) =>
+      resolveAssetUrl(a.thumbnailUrl, apiBase) ||
+      displayToPreview(resolveAssetUrl(a.url, apiBase)),
+    )
+    .filter(Boolean)
+  const originalFromAssets = materials
+    .map(
+      (a) =>
+        resolveAssetUrl(a.originalUrl, apiBase) ||
+        resolveAssetUrl(a.url, apiBase),
+    )
     .filter(Boolean)
 
   const images: string[] = []
-  if (cover) images.push(cover)
-  for (const url of imagesFromAssets) {
-    if (url !== cover) images.push(url)
+  const previewImages: string[] = []
+  const originalImages: string[] = []
+
+  if (cover) {
+    images.push(cover)
+    previewImages.push(resolveCoverPreview(product, cover, apiBase))
+    const matchedIndex = imagesFromAssets.findIndex((url) => url === cover)
+    originalImages.push(
+      matchedIndex >= 0
+        ? originalFromAssets[matchedIndex] || cover
+        : cover,
+    )
   }
-  if (!images.length) images.push(PLACEHOLDER)
+
+  for (let i = 0; i < imagesFromAssets.length; i++) {
+    const url = imagesFromAssets[i]
+    if (url === cover) continue
+    images.push(url)
+    previewImages.push(previewFromAssets[i] || displayToPreview(url))
+    originalImages.push(originalFromAssets[i] || url)
+  }
+
+  if (!images.length) {
+    images.push(PLACEHOLDER)
+    previewImages.push(PLACEHOLDER)
+    originalImages.push(PLACEHOLDER)
+  }
 
   const promoVideo =
     resolveAssetUrl(product.promoVideo?.url, apiBase) || undefined
@@ -127,6 +200,8 @@ export function mapApiProduct(product: ApiProduct, apiBase: string): Product {
     seoKeywords: fieldPair(product.i18n, 'seoKeywords', ''),
     seoDescription: fieldPair(product.i18n, 'seoDescription', ''),
     images,
+    previewImages,
+    originalImages,
     video,
     promoVideo,
     installVideo,

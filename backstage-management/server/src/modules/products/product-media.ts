@@ -11,6 +11,7 @@ export type MediaAsset = MediaFile & {
   id?: number;
   size: number | null;
   thumbnailUrl?: string | null;
+  originalUrl?: string | null;
 };
 
 export type ProductI18nContent = {
@@ -67,6 +68,7 @@ function toAsset(
     name?: string | null;
     size?: number | null;
     thumbnailUrl?: string | null;
+    originalUrl?: string | null;
   },
   uploadDir: string,
 ): MediaAsset {
@@ -76,6 +78,7 @@ function toAsset(
     name: item.name || fileNameFromUrl(item.url),
     size: item.size ?? sizeFromUrl(item.url, uploadDir),
     thumbnailUrl: item.thumbnailUrl || undefined,
+    originalUrl: item.originalUrl || undefined,
   };
 }
 
@@ -209,6 +212,7 @@ export function serializeProduct(
     name?: string | null;
     size?: number | null;
     thumbnailUrl?: string | null;
+    originalUrl?: string | null;
   }>;
 
   const materials = assets

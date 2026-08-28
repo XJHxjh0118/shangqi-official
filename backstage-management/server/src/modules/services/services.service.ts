@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
+  buildKeywordOr,
+  parseOptionalBoolean,
+} from '../../common/query.util';
+import {
   CreateServiceItemDto,
+  QueryServiceItemDto,
   UpdateServiceItemDto,
 } from './dto/service-item.dto';
 
@@ -13,8 +18,16 @@ import {
 export class ServicesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(query: QueryServiceItemDto = {}) {
+    const keyword = query.keyword?.trim();
+    const enabled = parseOptionalBoolean(query.enabled);
+    const keywordOr = buildKeywordOr(keyword, ['code', 'titleZh', 'titleEn']);
+
     return this.prisma.serviceItem.findMany({
+      where: {
+        ...(enabled !== undefined ? { enabled } : {}),
+        ...(keywordOr ? { OR: keywordOr } : {}),
+      },
       orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     });
   }

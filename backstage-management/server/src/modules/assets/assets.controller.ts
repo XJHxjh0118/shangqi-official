@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Post,
@@ -164,7 +163,7 @@ export class AssetsController {
     return this.assetsService.bindMany(body.productId, body.items);
   }
 
-  @Get('list/:productId')
+  @Post('list/:productId')
   @ApiOperation({ summary: '按产品查询素材，同时返回产品基本信息与语言内容' })
   list(@Param('productId', ParseIntPipe) productId: number) {
     return this.assetsService.listByProduct(productId);

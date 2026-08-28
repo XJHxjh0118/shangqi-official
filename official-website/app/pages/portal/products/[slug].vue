@@ -15,10 +15,13 @@ const {
   description,
   activeImage,
   activeSrc,
+  activeOriginalSrc,
+  canDownloadOriginal,
   added,
   favorited,
   pending,
-  assetPackHref,
+  hasLegacyAssetPack,
+  onDownloadAssetPack,
   onAddInquiry,
   onToggleFavorite,
   setActiveImage,
@@ -34,7 +37,7 @@ const hasPdf = computed(() => Boolean(product.value?.pdfs?.length))
 const hasAssets = computed(
   () =>
     Boolean(product.value?.assetPacks?.length) ||
-    Boolean(assetPackHref.value) ||
+    hasLegacyAssetPack.value ||
     hasPdf.value,
 )
 
@@ -83,6 +86,7 @@ watch(
             v-if="mediaTab === 'gallery'"
             :src="activeSrc"
             :alt="name"
+            loading="lazy"
           />
           <video
             v-else-if="mediaTab === 'promo' && promoSrc"
@@ -110,13 +114,13 @@ watch(
               >
                 {{ t('detail.downloadPack') }}
               </a>
-              <a
-                v-if="!product.assetPacks?.length && assetPackHref"
-                :href="assetPackHref"
-                :download="`${product.sku}-assets.zip`"
+              <button
+                v-if="!product.assetPacks?.length && hasLegacyAssetPack"
+                type="button"
+                @click="onDownloadAssetPack"
               >
                 {{ t('detail.downloadPack') }}
-              </a>
+              </button>
               <a
                 v-for="pdf in product.pdfs"
                 :key="pdf.url"
@@ -128,6 +132,12 @@ watch(
               </a>
             </div>
           </div>
+
+          <p v-if="mediaTab === 'gallery' && canDownloadOriginal" class="p-meta" style="margin-top: 10px">
+            <a :href="activeOriginalSrc" download>
+              {{ t('detail.downloadOriginal') }}
+            </a>
+          </p>
 
           <div class="p-media-thumbs" aria-label="media">
             <button
@@ -165,13 +175,13 @@ watch(
 
           <div v-if="mediaTab === 'gallery'" class="p-thumbs">
             <button
-              v-for="(img, i) in product.images"
+              v-for="(img, i) in product.previewImages"
               :key="`${img}-${i}`"
               type="button"
               :class="{ active: activeImage === i }"
               @click="setActiveImage(i)"
             >
-              <img :src="img" :alt="`${name} ${i + 1}`" />
+              <img :src="img" :alt="`${name} ${i + 1}`" loading="lazy" />
             </button>
           </div>
         </div>
@@ -212,10 +222,18 @@ watch(
             <button class="p-btn-ghost" type="button" @click="onToggleFavorite">
               {{ favorited ? t('detail.favorited') : t('detail.favorite') }}
             </button>
-            <a
-              v-if="assetPackHref || product.assetPacks?.length"
+            <button
+              v-if="hasLegacyAssetPack && !product.assetPacks?.length"
               class="p-btn-ghost"
-              :href="product.assetPacks?.[0]?.url || assetPackHref"
+              type="button"
+              @click="onDownloadAssetPack"
+            >
+              {{ t('detail.downloadPack') }}
+            </button>
+            <a
+              v-else-if="product.assetPacks?.length"
+              class="p-btn-ghost"
+              :href="product.assetPacks[0]?.url"
               target="_blank"
               rel="noopener"
             >

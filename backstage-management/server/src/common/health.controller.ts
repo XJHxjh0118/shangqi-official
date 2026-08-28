@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 
@@ -6,7 +6,7 @@ import { Public } from './decorators/public.decorator';
 @Public()
 @Controller('health')
 export class HealthController {
-  @Get()
+  @Post()
   @ApiOperation({ summary: '健康检查（部署探活）' })
   check() {
     return {

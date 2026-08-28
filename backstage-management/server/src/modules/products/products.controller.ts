@@ -2,12 +2,10 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
@@ -25,12 +23,12 @@ import { ProductsService } from './products.service';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Get('list')
-  findAll(@Query() query: QueryProductDto) {
+  @Post('list')
+  findAll(@Body() query: QueryProductDto) {
     return this.productsService.findAll(query);
   }
 
-  @Get('detail/:id')
+  @Post('detail/:id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne(id);
   }

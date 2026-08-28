@@ -148,8 +148,8 @@ onBeforeUnmount(() => {
         >
           <div class="p-feature-media">
             <img
-              v-if="product.images[0]"
-              :src="product.images[0]"
+              v-if="product.previewImages[0] || product.images[0]"
+              :src="product.previewImages[0] || product.images[0]"
               :alt="getLocalized(product.name, locale)"
               loading="lazy"
             />

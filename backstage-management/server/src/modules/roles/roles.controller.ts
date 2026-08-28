@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -10,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
-import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
+import { CreateRoleDto, QueryRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RolesService } from './roles.service';
 
 @ApiTags('Roles')
@@ -19,16 +18,16 @@ import { RolesService } from './roles.service';
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @Get('menus')
+  @Post('menus')
   @Menus('account:role', 'account:staff')
   menuCatalog() {
     return this.rolesService.menuCatalog();
   }
 
-  @Get('list')
+  @Post('list')
   @Menus('account:role', 'account:staff')
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(@Body() query: QueryRoleDto) {
+    return this.rolesService.findAll(query);
   }
 
   @Post('add')

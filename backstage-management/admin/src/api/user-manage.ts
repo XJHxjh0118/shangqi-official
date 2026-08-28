@@ -3,10 +3,10 @@ import { http } from "@/utils/http";
 type Result<T = any> = { code: number; data: T; msg: string };
 
 export const getUsers = (params?: object) =>
-  http.request<Result>("get", "/account/user/list", { params });
+  http.request<Result>("post", "/account/user/list", { data: params });
 
 export const getUser = (id: number) =>
-  http.request<Result>("get", `/account/user/detail/${id}`);
+  http.request<Result>("post", `/account/user/detail/${id}`);
 
 export const createUser = (data: object) =>
   http.request<Result>("post", "/account/user/add", { data });

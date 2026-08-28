@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -12,6 +11,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
 import {
   CreateServiceItemDto,
+  QueryServiceItemDto,
   UpdateServiceItemDto,
 } from './dto/service-item.dto';
 import { ServicesService } from './services.service';
@@ -22,9 +22,9 @@ import { ServicesService } from './services.service';
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  @Get('list')
-  findAll() {
-    return this.servicesService.findAll();
+  @Post('list')
+  findAll(@Body() query: QueryServiceItemDto) {
+    return this.servicesService.findAll(query);
   }
 
   @Post('add')

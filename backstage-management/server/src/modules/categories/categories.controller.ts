@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -11,7 +10,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto, ReorderCategoryChildrenDto, UpdateCategoryDto } from './dto/category.dto';
+import { CreateCategoryDto, QueryCategoryDto, ReorderCategoryChildrenDto, UpdateCategoryDto } from './dto/category.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -19,12 +18,12 @@ import { CreateCategoryDto, ReorderCategoryChildrenDto, UpdateCategoryDto } from
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  @Get('list')
-  findAll() {
-    return this.categoriesService.findAll();
+  @Post('list')
+  findAll(@Body() query: QueryCategoryDto) {
+    return this.categoriesService.findAll(query);
   }
 
-  @Get('flat')
+  @Post('flat')
   findFlat() {
     return this.categoriesService.findFlat();
   }

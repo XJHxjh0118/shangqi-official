@@ -354,7 +354,7 @@ onBeforeUnmount(() => {
               />
               <img
                 v-else
-                :src="product.images[0]"
+                :src="product.previewImages[0] || product.images[0]"
                 alt=""
                 width="640"
                 height="480"

@@ -14,11 +14,22 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
+import SearchFilters from "@/components/SearchFilters/index.vue";
+import type { SearchFilterField } from "@/components/SearchFilters/types";
+import {
+  buildListQuery,
+  ENABLED_STATUS_OPTIONS
+} from "@/utils/list-query";
 
 defineOptions({ name: "AccountRole" });
 
 const loading = ref(false);
 const list = ref<RoleItem[]>([]);
+const filters = ref<Record<string, unknown>>({
+  keyword: "",
+  enabled: "",
+  isSystem: ""
+});
 const menuTree = ref<MenuNode[]>([]);
 const dialogVisible = ref(false);
 const editingId = ref<number | null>(null);
@@ -42,6 +53,34 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "enabled", label: "状态", width: 90, slot: true }
 ];
 
+const filterFields: SearchFilterField[] = [
+  {
+    prop: "keyword",
+    label: "关键词",
+    placeholder: "名称 / 标识 / 说明",
+    width: 240
+  },
+  {
+    prop: "isSystem",
+    label: "类型",
+    type: "select",
+    placeholder: "类型",
+    width: 140,
+    options: [
+      { label: "系统内置", value: "true" },
+      { label: "自定义", value: "false" }
+    ]
+  },
+  {
+    prop: "enabled",
+    label: "状态",
+    type: "select",
+    placeholder: "状态",
+    width: 120,
+    options: ENABLED_STATUS_OPTIONS
+  }
+];
+
 const treeProps = {
   children: "children",
   label: "title"
@@ -50,12 +89,19 @@ const treeProps = {
 async function fetchList() {
   loading.value = true;
   try {
-    const [rolesRes, menusRes] = await Promise.all([getRoles(), getRoleMenus()]);
+    const [rolesRes, menusRes] = await Promise.all([
+      getRoles(buildListQuery(filters.value)),
+      getRoleMenus()
+    ]);
     list.value = rolesRes.data || [];
     menuTree.value = menusRes.data || [];
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  fetchList();
 }
 
 function menuCount(row: RoleItem) {
@@ -108,8 +154,12 @@ function openEdit(row: RoleItem) {
 }
 
 async function submit() {
-  if (!form.name.trim() || (!editingId.value && !form.code.trim())) {
-    ElMessage.warning("请填写角色名称和标识");
+  if (!form.name.trim()) {
+    ElMessage.warning("请填写角色名称");
+    return;
+  }
+  if (!editingId.value && !form.code.trim()) {
+    ElMessage.warning("请填写角色标识");
     return;
   }
   const menus = isDealer.value
@@ -167,6 +217,16 @@ onMounted(fetchList);
       <p class="mb-4 text-sm text-gray-500">
         配置后台角色及其可访问的菜单。系统内置角色不可删除。
       </p>
+      <SearchFilters
+        v-model="filters"
+        :fields="filterFields"
+        :loading="loading"
+        embedded
+        :bordered="false"
+        :show-label="false"
+        @search="handleSearch"
+        @reset="handleSearch"
+      />
       <ToolbarTable
         :columns="tableColumns"
         :data="list"

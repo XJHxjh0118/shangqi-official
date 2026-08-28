@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -22,12 +21,12 @@ import { HomeVehiclesService } from './home-vehicles.service';
 export class HomeVehiclesController {
   constructor(private readonly homeVehiclesService: HomeVehiclesService) {}
 
-  @Get('list')
+  @Post('list')
   findAll() {
     return this.homeVehiclesService.findAll();
   }
 
-  @Get('options')
+  @Post('options')
   findOptions() {
     return this.homeVehiclesService.findOptions();
   }

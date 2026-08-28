@@ -9,6 +9,14 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { ListFilterDto } from '../../../common/dto/list-filter.dto';
+
+export class QueryCategoryDto extends ListFilterDto {
+  @ApiPropertyOptional({ enum: ['main', 'child'], description: '层级' })
+  @IsOptional()
+  @IsString()
+  level?: 'main' | 'child';
+}
 
 export class CategoryI18nDto {
   @ApiProperty({ example: 'zh' })

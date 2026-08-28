@@ -13,11 +13,21 @@ import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import VehicleDetailDialog from "@/components/VehicleDetailDialog.vue";
 import { EN_TEXT_MAX, ZH_TEXT_MAX } from "@/utils/locale";
+import SearchFilters from "@/components/SearchFilters/index.vue";
+import type { SearchFilterField } from "@/components/SearchFilters/types";
+import {
+  buildListQuery,
+  ENABLED_FILTER_OPTIONS
+} from "@/utils/list-query";
 
 defineOptions({ name: "ProductVehicle" });
 
 const loading = ref(false);
 const list = ref<any[]>([]);
+const filters = ref<Record<string, unknown>>({
+  keyword: "",
+  enabled: ""
+});
 const dialogVisible = ref(false);
 const detailVisible = ref(false);
 const detailRow = ref<any | null>(null);
@@ -77,14 +87,35 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "enabled", label: "启用", width: 80, slot: true }
 ];
 
+const filterFields: SearchFilterField[] = [
+  {
+    prop: "keyword",
+    label: "关键词",
+    placeholder: "编码 / 品牌 / 车型",
+    width: 240
+  },
+  {
+    prop: "enabled",
+    label: "启用",
+    type: "select",
+    placeholder: "启用",
+    width: 120,
+    options: ENABLED_FILTER_OPTIONS
+  }
+];
+
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await getVehicles();
+    const res = await getVehicles(buildListQuery(filters.value));
     list.value = res.data || [];
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  fetchList();
 }
 
 function openCreate() {
@@ -120,8 +151,24 @@ function openEdit(row: any) {
 }
 
 async function submit() {
-  if (!form.code || !form.brandZh || !form.brandEn || !form.modelZh || !form.modelEn) {
-    ElMessage.warning("请填写编码以及中英文品牌、车型");
+  if (!form.code?.trim()) {
+    ElMessage.warning("请填写编码");
+    return;
+  }
+  if (!form.brandZh?.trim()) {
+    ElMessage.warning("请填写品牌中文");
+    return;
+  }
+  if (!form.brandEn?.trim()) {
+    ElMessage.warning("请填写品牌英文");
+    return;
+  }
+  if (!form.modelZh?.trim()) {
+    ElMessage.warning("请填写车型中文");
+    return;
+  }
+  if (!form.modelEn?.trim()) {
+    ElMessage.warning("请填写车型英文");
     return;
   }
   if (editingId.value) {
@@ -169,6 +216,16 @@ onMounted(fetchList);
 <template>
   <div class="page-fill">
     <el-card shadow="never">
+      <SearchFilters
+        v-model="filters"
+        :fields="filterFields"
+        :loading="loading"
+        embedded
+        :bordered="false"
+        :show-label="false"
+        @search="handleSearch"
+        @reset="handleSearch"
+      />
       <ToolbarTable
         :columns="tableColumns"
         :data="list"

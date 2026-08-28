@@ -64,6 +64,8 @@ export type ApiMediaFile = {
 
 export type ApiMediaAsset = ApiMediaFile & {
   size?: number | null
+  thumbnailUrl?: string | null
+  originalUrl?: string | null
 }
 
 export type ApiAsset = {
@@ -71,6 +73,7 @@ export type ApiAsset = {
   type: 'IMAGE' | 'VIDEO' | 'PDF' | 'OTHER'
   url: string
   thumbnailUrl?: string | null
+  originalUrl?: string | null
   name?: string | null
   size?: number | null
   sort?: number

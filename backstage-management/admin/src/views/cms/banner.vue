@@ -24,11 +24,22 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
+import SearchFilters from "@/components/SearchFilters/index.vue";
+import type { SearchFilterField } from "@/components/SearchFilters/types";
+import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
+import {
+  buildListQuery,
+  ENABLED_FILTER_OPTIONS
+} from "@/utils/list-query";
 
 defineOptions({ name: "CmsBanner" });
 
 const loading = ref(false);
 const list = ref<any[]>([]);
+const filters = ref<Record<string, unknown>>({
+  keyword: "",
+  enabled: ""
+});
 const dialogVisible = ref(false);
 const sortDialogVisible = ref(false);
 const sortSaving = ref(false);
@@ -92,11 +103,15 @@ function initSortable() {
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await getBanners();
+    const res = await getBanners(buildListQuery(filters.value));
     list.value = res.data || [];
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  fetchList();
 }
 
 function openCreate() {
@@ -135,12 +150,14 @@ function openEdit(row: any) {
   dialogVisible.value = true;
 }
 
-function openSortDialog() {
-  if (list.value.length < 2) {
+async function openSortDialog() {
+  const res = await getBanners();
+  const all = res.data || [];
+  if (all.length < 2) {
     ElMessage.warning("至少需要 2 条 Banner 才能调整顺序");
     return;
   }
-  sortList.value = list.value.map(item => ({ ...item }));
+  sortList.value = all.map(item => ({ ...item }));
   sortDialogVisible.value = true;
 }
 
@@ -175,6 +192,23 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "sort", label: "排序", width: 80 },
   { prop: "schedule", label: "上下线", minWidth: 200, slot: true },
   { prop: "enabled", label: "启用", width: 80, slot: true }
+];
+
+const filterFields: SearchFilterField[] = [
+  {
+    prop: "keyword",
+    label: "关键词",
+    placeholder: "标题 / 跳转链接",
+    width: 240
+  },
+  {
+    prop: "enabled",
+    label: "启用",
+    type: "select",
+    placeholder: "启用",
+    width: 120,
+    options: ENABLED_FILTER_OPTIONS
+  }
 ];
 
 function beforeImageUpload(file: File) {
@@ -219,12 +253,12 @@ function clearImage() {
 
 async function submit() {
   const missing = missingRequiredLocaleText(i18nEntries.value);
-  if (missing || !form.imageUrl) {
-    ElMessage.warning(
-      missing
-        ? `请填写${localeLabel(missing)}标题并上传图片`
-        : "请上传图片"
-    );
+  if (missing) {
+    ElMessage.warning(`请填写${localeLabel(missing)}标题`);
+    return;
+  }
+  if (!form.imageUrl) {
+    ElMessage.warning("请上传图片");
     return;
   }
   const texts = filterLocaleTextPayload(i18nEntries.value);
@@ -273,6 +307,16 @@ onBeforeUnmount(destroySortable);
 <template>
   <div class="page-fill">
     <el-card shadow="never">
+      <SearchFilters
+        v-model="filters"
+        :fields="filterFields"
+        :loading="loading"
+        embedded
+        :bordered="false"
+        :show-label="false"
+        @search="handleSearch"
+        @reset="handleSearch"
+      />
       <ToolbarTable
         :columns="tableColumns"
         :data="list"
@@ -284,9 +328,7 @@ onBeforeUnmount(destroySortable);
       >
         <template #toolbar-left>
           <el-button type="primary" @click="openCreate">新建 Banner</el-button>
-          <el-button :disabled="list.length < 2" @click="openSortDialog">
-            调整顺序
-          </el-button>
+          <el-button @click="openSortDialog">调整顺序</el-button>
           <span class="banner-hero-hint">
             启用中的 Banner 按排序出现在官网首页首屏，滚动时依次切换。建议 1920×1080 横图。
           </span>
@@ -331,24 +373,16 @@ onBeforeUnmount(destroySortable);
         <I18nTextEditor v-model="i18nEntries" field-label="标题" />
         <el-form-item label="Banner 图" required>
           <div class="image-upload">
-            <div v-if="form.imageUrl" class="image-preview">
-              <el-image
-                :src="toDisplayUrl(form.imageUrl)"
-                fit="cover"
-                style="width: 240px; height: 120px; border-radius: 6px"
-                :preview-src-list="[toDisplayUrl(form.imageUrl)]"
-                preview-teleported
-              />
-              <el-button
-                class="mt-2"
-                size="small"
-                type="danger"
-                plain
-                @click="clearImage"
-              >
-                清除图片
-              </el-button>
-            </div>
+            <MediaPreviewTile
+              v-if="form.imageUrl"
+              :src="toDisplayUrl(form.imageUrl)"
+              type="image"
+              :width="240"
+              :height="120"
+              :show-name="false"
+              :show-badge="false"
+              @remove="clearImage"
+            />
             <el-upload
               :show-file-list="false"
               accept="image/*"
@@ -458,12 +492,6 @@ onBeforeUnmount(destroySortable);
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-}
-
-.image-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 .upload-tip {

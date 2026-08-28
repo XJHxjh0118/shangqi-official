@@ -30,6 +30,12 @@ import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import CategoryDetailDialog from "@/components/CategoryDetailDialog.vue";
+import SearchFilters from "@/components/SearchFilters/index.vue";
+import type { SearchFilterField } from "@/components/SearchFilters/types";
+import {
+  buildListQuery,
+  ENABLED_FILTER_OPTIONS
+} from "@/utils/list-query";
 
 defineOptions({ name: "ProductCategory" });
 
@@ -43,6 +49,12 @@ type ChildDraft = {
 
 const loading = ref(false);
 const tree = ref<any[]>([]);
+const allTree = ref<any[]>([]);
+const filters = ref<Record<string, unknown>>({
+  keyword: "",
+  level: "",
+  enabled: ""
+});
 const dialogVisible = ref(false);
 const detailVisible = ref(false);
 const detailRow = ref<any | null>(null);
@@ -70,7 +82,7 @@ function hasChildren(row: any) {
 }
 
 function buildParentOptions(excludeId?: number | null, disableAll = false) {
-  return (tree.value || [])
+  return (allTree.value || [])
     .filter((i: any) => i.id !== excludeId)
     .map((i: any) => ({
       id: i.id,
@@ -115,15 +127,24 @@ function setChildText(item: ChildDraft, locale: string, value: string) {
   if (row) row.text = value;
 }
 
+async function fetchParentOptions() {
+  const res = await getCategories();
+  allTree.value = res.data || [];
+  parentTreeOptions.value = buildParentOptions();
+}
+
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await getCategories();
+    const res = await getCategories(buildListQuery(filters.value));
     tree.value = res.data || [];
-    parentTreeOptions.value = buildParentOptions();
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  fetchList();
 }
 
 function destroySortable() {
@@ -202,6 +223,33 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "enabled", label: "启用", width: 80, slot: true }
 ];
 
+const filterFields: SearchFilterField[] = [
+  { prop: "keyword", label: "关键词", placeholder: "名称 / 编码", width: 220 },
+  {
+    prop: "level",
+    label: "层级",
+    type: "select",
+    placeholder: "层级",
+    width: 140,
+    options: [
+      { label: "大类", value: "main" },
+      { label: "子分类", value: "child" }
+    ]
+  },
+  {
+    prop: "enabled",
+    label: "启用",
+    type: "select",
+    placeholder: "启用",
+    width: 120,
+    options: ENABLED_FILTER_OPTIONS
+  }
+];
+
+async function refreshData() {
+  await Promise.all([fetchParentOptions(), fetchList()]);
+}
+
 function buildChildrenPayload() {
   return childList.value.map((item, index) => ({
     id: item.id,
@@ -216,26 +264,32 @@ function buildChildrenPayload() {
 }
 
 async function submit() {
+  if (!form.code?.trim()) {
+    ElMessage.warning("请填写编码");
+    return;
+  }
   const missing = missingRequiredLocaleText(i18nEntries.value);
-  if (!form.code || missing) {
-    ElMessage.warning(
-      missing
-        ? `请填写编码和${localeLabel(missing)}名`
-        : "请填写编码和中英文名称"
-    );
+  if (missing) {
+    ElMessage.warning(`请填写${localeLabel(missing)}名`);
     return;
   }
 
   if (isMainCategoryForm.value) {
     for (let i = 0; i < childList.value.length; i++) {
       const child = childList.value[i];
-      const childMissing = missingRequiredLocaleText(child.i18n);
-      if (!child.code.trim() || childMissing) {
-        ElMessage.warning(
-          childMissing
-            ? `请完善第 ${i + 1} 个子分类的编码和${localeLabel(childMissing)}名`
-            : `请完善第 ${i + 1} 个子分类的编码和中英文名称`
-        );
+      const index = i + 1;
+      if (!child.code.trim()) {
+        ElMessage.warning(`请填写第 ${index} 个子分类的编码`);
+        return;
+      }
+      const zhEntry = child.i18n.find(e => e.locale === "zh");
+      if (!zhEntry?.text?.trim()) {
+        ElMessage.warning(`请填写第 ${index} 个子分类的中文名`);
+        return;
+      }
+      const enEntry = child.i18n.find(e => e.locale === "en");
+      if (!enEntry?.text?.trim()) {
+        ElMessage.warning(`请填写第 ${index} 个子分类的英文名`);
         return;
       }
     }
@@ -258,7 +312,7 @@ async function submit() {
     ElMessage.success("创建成功");
   }
   dialogVisible.value = false;
-  fetchList();
+  refreshData();
 }
 
 async function onDelete(row: any) {
@@ -271,12 +325,12 @@ async function onDelete(row: any) {
   });
   await deleteCategory(row.id);
   ElMessage.success("已删除");
-  fetchList();
+  refreshData();
 }
 
 function openDetail(row: any) {
   if (row.parentId) {
-    const parent = tree.value.find((item: any) => item.id === row.parentId);
+    const parent = allTree.value.find((item: any) => item.id === row.parentId);
     detailRow.value = { ...row, parent };
   } else {
     detailRow.value = row;
@@ -319,13 +373,23 @@ watch(
   }
 );
 
-onMounted(fetchList);
+onMounted(refreshData);
 onBeforeUnmount(destroySortable);
 </script>
 
 <template>
   <div class="page-fill">
     <el-card shadow="never">
+      <SearchFilters
+        v-model="filters"
+        :fields="filterFields"
+        :loading="loading"
+        embedded
+        :bordered="false"
+        :show-label="false"
+        @search="handleSearch"
+        @reset="handleSearch"
+      />
       <ToolbarTable
         :columns="tableColumns"
         :data="tree"

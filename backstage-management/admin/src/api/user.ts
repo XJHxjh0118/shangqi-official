@@ -6,11 +6,11 @@ export type UserResult = {
   data: {
     /** 头像 */
     avatar: string;
-    /** 用户名 */
+    /** 用户�?*/
     username: string;
     /** 昵称 */
     nickname: string;
-    /** 当前登录用户的角色 */
+    /** 当前登录用户的角�?*/
     roles: Array<string>;
     /** 按钮级别权限 */
     permissions: Array<string>;
@@ -18,7 +18,7 @@ export type UserResult = {
     accessToken: string;
     /** 用于调用刷新`accessToken`的接口时所需的`token` */
     refreshToken: string;
-    /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'） */
+    /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'�?*/
     expires: Date;
   };
 };
@@ -31,19 +31,23 @@ export type RefreshTokenResult = {
     accessToken: string;
     /** 用于调用刷新`accessToken`的接口时所需的`token` */
     refreshToken: string;
-    /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'） */
+    /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'�?*/
     expires: Date;
   };
 };
 
 /** 登录 */
 export const getLogin = (data?: object) => {
-  return http.request<UserResult>("post", "/auth/login", { data });
+  return http.request<UserResult>("post", "/auth/login", {
+    data,
+    skipGlobalErrorHandler: true
+  });
 };
 
 /** 刷新`token` */
 export const refreshTokenApi = (data?: object) => {
   return http.request<RefreshTokenResult>("post", "/auth/refresh-token", {
-    data
+    data,
+    skipGlobalErrorHandler: true
   });
 };

@@ -103,12 +103,16 @@ function openEdit(row: any) {
 }
 
 async function submit() {
-  if (!form.username || !form.nickname) {
-    ElMessage.warning("请填写用户名和昵称");
+  if (!form.username?.trim()) {
+    ElMessage.warning("请填写用户名");
     return;
   }
   if (!editingId.value && !form.password) {
     ElMessage.warning("请填写密码");
+    return;
+  }
+  if (!form.nickname?.trim()) {
+    ElMessage.warning("请填写昵称");
     return;
   }
   if (editingId.value) {

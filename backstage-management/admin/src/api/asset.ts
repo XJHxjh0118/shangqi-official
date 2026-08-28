@@ -30,12 +30,13 @@ export const uploadAssetsBatch = (files: File[], productId?: number) => {
   });
 };
 
-/** 将已上传素材绑定到产品 */
+/** 将已上传素材绑定到产�?*/
 export const bindAssets = (
   productId: number,
   items: Array<{
     url: string;
     thumbnailUrl?: string | null;
+    originalUrl?: string | null;
     type?: string;
     name?: string | null;
     sort?: number;
@@ -46,7 +47,7 @@ export const bindAssets = (
   });
 
 export const getProductAssets = (productId: number) =>
-  http.request<Result>("get", `/product/asset/list/${productId}`);
+  http.request<Result>("post", `/product/asset/list/${productId}`);
 
 export const deleteAsset = (id: number) =>
   http.request<Result>("delete", `/product/asset/delete/${id}`);

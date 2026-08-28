@@ -2,12 +2,10 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
@@ -21,12 +19,12 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('list')
-  findAll(@Query() query: QueryUserDto) {
+  @Post('list')
+  findAll(@Body() query: QueryUserDto) {
     return this.usersService.findAll(query);
   }
 
-  @Get('detail/:id')
+  @Post('detail/:id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findOne(id);
   }

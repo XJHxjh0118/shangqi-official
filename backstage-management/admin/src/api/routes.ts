@@ -7,5 +7,5 @@ type Result = {
 };
 
 export const getAsyncRoutes = () => {
-  return http.request<Result>("get", "/auth/async-routes");
+  return http.request<Result>("post", "/auth/async-routes");
 };

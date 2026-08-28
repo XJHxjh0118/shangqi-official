@@ -7,6 +7,7 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
+import { ListFilterDto } from '../../../common/dto/list-filter.dto';
 
 export class CreateRoleDto {
   @ApiProperty({ example: 'SEO' })
@@ -61,4 +62,11 @@ export class UpdateRoleDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+}
+
+export class QueryRoleDto extends ListFilterDto {
+  @ApiPropertyOptional({ description: '系统内置：true | false' })
+  @IsOptional()
+  @IsString()
+  isSystem?: string;
 }

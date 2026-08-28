@@ -14,7 +14,11 @@ import {
   normalizeMenuKeys,
 } from '../../common/menu-catalog';
 import { ALL_PERMISSION, SYSTEM_ROLE } from '../../common/system-role';
-import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
+import { CreateRoleDto, QueryRoleDto, UpdateRoleDto } from './dto/role.dto';
+import {
+  buildKeywordOr,
+  parseOptionalBoolean,
+} from '../../common/query.util';
 
 function parseMenus(raw: string | null | undefined): string[] {
   if (!raw) return [];
@@ -140,9 +144,19 @@ export class RolesService implements OnModuleInit {
     }
   }
 
-  async findAll() {
+  async findAll(query: QueryRoleDto = {}) {
     await this.ensureSystemRoles();
+    const keyword = query.keyword?.trim();
+    const enabled = parseOptionalBoolean(query.enabled);
+    const isSystem = parseOptionalBoolean(query.isSystem);
+    const keywordOr = buildKeywordOr(keyword, ['name', 'code', 'description']);
+
     const list = await this.prisma.sysRole.findMany({
+      where: {
+        ...(enabled !== undefined ? { enabled } : {}),
+        ...(isSystem !== undefined ? { isSystem } : {}),
+        ...(keywordOr ? { OR: keywordOr } : {}),
+      },
       orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     });
     return list.map((row) => this.toDto(row));

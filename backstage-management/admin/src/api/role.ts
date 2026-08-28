@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import type { ListQueryParams } from "@/utils/list-query";
 
 type Result<T = any> = { code: number; data: T; msg: string };
 
@@ -19,11 +20,11 @@ export type RoleItem = {
   sort: number;
 };
 
-export const getRoles = () =>
-  http.request<Result<RoleItem[]>>("get", "/account/role/list");
+export const getRoles = (params?: ListQueryParams) =>
+  http.request<Result<RoleItem[]>>("post", "/account/role/list", { data: params });
 
 export const getRoleMenus = () =>
-  http.request<Result<MenuNode[]>>("get", "/account/role/menus");
+  http.request<Result<MenuNode[]>>("post", "/account/role/menus");
 
 export const createRole = (data: object) =>
   http.request<Result<RoleItem>>("post", "/account/role/add", { data });

@@ -14,10 +14,13 @@ const {
   description,
   activeImage,
   activeSrc,
+  activeOriginalSrc,
+  canDownloadOriginal,
   added,
   favorited,
   pending,
-  assetPackHref,
+  hasLegacyAssetPack,
+  onDownloadAssetPack,
   onAddInquiry,
   onToggleFavorite,
   setActiveImage,
@@ -64,18 +67,23 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <div class="detail-grid">
           <div>
             <div class="gallery-main">
-              <img :src="activeSrc" :alt="name" />
+              <img :src="activeSrc" :alt="name" loading="lazy" />
               <ProductFlags :tags="product.tags" />
             </div>
+            <p v-if="canDownloadOriginal" class="gallery-download">
+              <a :href="activeOriginalSrc" download>
+                {{ t('detail.downloadOriginal') }}
+              </a>
+            </p>
             <div class="thumbs">
               <button
-                v-for="(img, i) in product.images"
+                v-for="(img, i) in product.previewImages"
                 :key="`${img}-${i}`"
                 type="button"
                 :class="{ 'is-active': activeImage === i }"
                 @click="setActiveImage(i)"
               >
-                <img :src="img" :alt="`${name} ${i + 1}`" />
+                <img :src="img" :alt="`${name} ${i + 1}`" loading="lazy" />
               </button>
             </div>
             <section
@@ -141,7 +149,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             </div>
 
             <div
-              v-if="product.assetPacks?.length || assetPackHref || product.pdfs.length"
+              v-if="product.assetPacks?.length || hasLegacyAssetPack || product.pdfs.length"
               class="detail-files"
             >
               <p class="product-meta">{{ t('detail.assets') }}</p>
@@ -155,14 +163,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                 >
                   {{ t('detail.downloadPack') }}
                 </a>
-                <a
-                  v-if="!product.assetPacks?.length && assetPackHref"
+                <button
+                  v-if="!product.assetPacks?.length && hasLegacyAssetPack"
                   class="btn btn-ghost"
-                  :href="assetPackHref"
-                  :download="`${product.sku}-assets.zip`"
+                  type="button"
+                  @click="onDownloadAssetPack"
                 >
                   {{ t('detail.downloadPack') }}
-                </a>
+                </button>
                 <a
                   v-for="pdf in product.pdfs"
                   :key="pdf.url"

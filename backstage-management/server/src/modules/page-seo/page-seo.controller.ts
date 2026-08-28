@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Menus } from '../../common/decorators/menus.decorator';
 import { UpsertPageSeoDto } from './dto/page-seo.dto';
@@ -10,12 +10,12 @@ import { PageSeoService } from './page-seo.service';
 export class PageSeoController {
   constructor(private readonly pageSeoService: PageSeoService) {}
 
-  @Get('list')
+  @Post('list')
   findAll() {
     return this.pageSeoService.findAll();
   }
 
-  @Get('detail/:pageKey')
+  @Post('detail/:pageKey')
   findOne(@Param('pageKey') pageKey: string) {
     return this.pageSeoService.findByKey(pageKey);
   }

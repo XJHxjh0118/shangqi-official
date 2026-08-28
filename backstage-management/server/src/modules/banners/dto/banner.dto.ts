@@ -9,6 +9,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { ListFilterDto } from '../../../common/dto/list-filter.dto';
 
 export class BannerI18nDto {
   @ApiProperty({ example: 'zh' })
@@ -79,3 +80,5 @@ export class ReorderBannersDto {
   @IsInt({ each: true })
   ids: number[];
 }
+
+export class QueryBannerDto extends ListFilterDto {}

@@ -3,10 +3,10 @@ import { http } from "@/utils/http";
 type Result<T = any> = { code: number; data: T; msg: string };
 
 export const getMessages = (params?: object) =>
-  http.request<Result>("get", "/message/list", { params });
+  http.request<Result>("post", "/message/list", { data: params });
 
 export const getMessage = (id: number) =>
-  http.request<Result>("get", `/message/detail/${id}`);
+  http.request<Result>("post", `/message/detail/${id}`);
 
 export const handleMessage = (
   id: number,

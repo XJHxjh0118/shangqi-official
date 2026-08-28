@@ -31,6 +31,8 @@ export interface PureHttpResponse extends AxiosResponse {
 export interface PureHttpRequestConfig extends AxiosRequestConfig {
   beforeRequestCallback?: (request: PureHttpRequestConfig) => void;
   beforeResponseCallback?: (response: PureHttpResponse) => void;
+  /** 为 true 时不自动弹出全局错误提示（由调用方自行处理） */
+  skipGlobalErrorHandler?: boolean;
 }
 
 export default class PureHttp {

@@ -14,11 +14,21 @@ import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import { EN_TEXT_MAX, ZH_TEXT_MAX } from "@/utils/locale";
+import SearchFilters from "@/components/SearchFilters/index.vue";
+import type { SearchFilterField } from "@/components/SearchFilters/types";
+import {
+  buildListQuery,
+  ENABLED_FILTER_OPTIONS
+} from "@/utils/list-query";
 
 defineOptions({ name: "CmsService" });
 
 const loading = ref(false);
 const list = ref<any[]>([]);
+const filters = ref<Record<string, unknown>>({
+  keyword: "",
+  enabled: ""
+});
 const dialogVisible = ref(false);
 const editingId = ref<number | null>(null);
 const iconUploading = ref(false);
@@ -56,14 +66,35 @@ const tableColumns: ToolbarTableColumn[] = [
   { prop: "enabled", label: "启用", width: 80, slot: true }
 ];
 
+const filterFields: SearchFilterField[] = [
+  {
+    prop: "keyword",
+    label: "关键词",
+    placeholder: "编码 / 标题",
+    width: 240
+  },
+  {
+    prop: "enabled",
+    label: "启用",
+    type: "select",
+    placeholder: "启用",
+    width: 120,
+    options: ENABLED_FILTER_OPTIONS
+  }
+];
+
 async function fetchList() {
   loading.value = true;
   try {
-    const res = await getServiceItems();
+    const res = await getServiceItems(buildListQuery(filters.value));
     list.value = res.data || [];
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  fetchList();
 }
 
 function openCreate() {
@@ -117,8 +148,16 @@ async function uploadIcon(options: UploadRequestOptions) {
 }
 
 async function submit() {
-  if (!form.code || !form.titleZh || !form.titleEn) {
-    ElMessage.warning("请填写编码和中英文标题");
+  if (!form.code?.trim()) {
+    ElMessage.warning("请填写编码");
+    return;
+  }
+  if (!form.titleZh?.trim()) {
+    ElMessage.warning("请填写中文标题");
+    return;
+  }
+  if (!form.titleEn?.trim()) {
+    ElMessage.warning("请填写英文标题");
     return;
   }
   if (editingId.value) {
@@ -159,6 +198,16 @@ onMounted(fetchList);
 <template>
   <div class="page-fill">
     <el-card shadow="never">
+      <SearchFilters
+        v-model="filters"
+        :fields="filterFields"
+        :loading="loading"
+        embedded
+        :bordered="false"
+        :show-label="false"
+        @search="handleSearch"
+        @reset="handleSearch"
+      />
       <ToolbarTable
         :columns="tableColumns"
         :data="list"

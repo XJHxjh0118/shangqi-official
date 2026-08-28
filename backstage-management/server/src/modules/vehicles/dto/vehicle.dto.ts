@@ -7,6 +7,7 @@ import {
   IsString,
   Min,
 } from 'class-validator';
+import { ListFilterDto } from '../../../common/dto/list-filter.dto';
 
 export class CreateVehicleDto {
   @ApiProperty({ example: 'mg4-2024' })
@@ -55,3 +56,5 @@ export class CreateVehicleDto {
 }
 
 export class UpdateVehicleDto extends PartialType(CreateVehicleDto) {}
+
+export class QueryVehicleDto extends ListFilterDto {}

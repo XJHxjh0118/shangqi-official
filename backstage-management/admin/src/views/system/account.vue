@@ -194,12 +194,20 @@ async function openDetail(row: any) {
 }
 
 async function submit() {
-  if (!form.email || !form.company || !form.contactName) {
-    ElMessage.warning("请填写邮箱、公司名称和联系人");
+  if (!form.email?.trim()) {
+    ElMessage.warning("请填写登录邮箱");
     return;
   }
   if (!editingId.value && (!form.password || form.password.length < 6)) {
     ElMessage.warning("请填写至少 6 位密码");
+    return;
+  }
+  if (!form.company?.trim()) {
+    ElMessage.warning("请填写公司名称");
+    return;
+  }
+  if (!form.contactName?.trim()) {
+    ElMessage.warning("请填写联系人姓名");
     return;
   }
   const payload: any = {
