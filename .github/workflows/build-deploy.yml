@@ -93,5 +93,5 @@ jobs:
             deploy/server-update.sh "$REMOTE:${DEPLOY_PATH}/deploy/server-update.sh"
           ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes "$REMOTE" "chmod +x '${DEPLOY_PATH}/deploy/server-update.sh' \
             && ln -sfn '${DEPLOY_PATH}/releases/${STAMP}' '${DEPLOY_PATH}/releases/latest' \
-            && bash '${DEPLOY_PATH}/deploy/server-update.sh' '${DEPLOY_PATH}/releases/latest' \
-            && ls -dt '${DEPLOY_PATH}/releases'/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf"
+            && bash '${DEPLOY_PATH}/deploy/server-update.sh' '${DEPLOY_PATH}/releases/latest' 2>&1 \
+            && ls -dt '${DEPLOY_PATH}/releases'/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf || true"

@@ -12,9 +12,24 @@ WEB_DIR="$APP_ROOT/website"
 ADMIN_DIR="$APP_ROOT/admin"
 
 if [ ! -d "$RELEASE_DIR" ]; then
-  echo "Release dir not found: $RELEASE_DIR"
+  echo "ERROR: Release dir not found: $RELEASE_DIR"
   exit 1
 fi
+
+run_step() {
+  local title="$1"
+  shift
+  echo ""
+  echo "==> $title"
+  if "$@"; then
+    echo "OK: $title"
+    return 0
+  fi
+  local code=$?
+  echo "FAILED ($code): $title"
+  echo "Command: $*"
+  return "$code"
+}
 
 # 1G 机器兜底：没有 swap 就建 2G（只做一次）
 ensure_swap() {
@@ -34,42 +49,57 @@ ensure_swap() {
   fi
 }
 
+is_protected_name() {
+  local name="$1"
+  shift
+  local item
+  for item in "$@"; do
+    if [ "$name" = "$item" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 sync_tree() {
   local src="$1"
   local dst="$2"
   shift 2
+  local -a protected=("$@")
   mkdir -p "$dst"
+
   if command -v rsync >/dev/null 2>&1; then
-    local excludes=()
-    local a
-    for a in "$@"; do
-      excludes+=(--exclude "$a")
+    local rsync_args=(-a --delete)
+    local name
+    for name in "${protected[@]}"; do
+      # exclude: 不从源同步；protect: 目标端已有文件不被 --delete 删掉
+      rsync_args+=(--exclude "$name" --filter "P $name")
     done
-    rsync -a --delete "${excludes[@]}" "$src/" "$dst/"
+    rsync "${rsync_args[@]}" "$src/" "$dst/"
     return
   fi
 
-  local keep_tmp
-  keep_tmp="$(mktemp -d)"
-  local name
-  for name in "$@"; do
-    if [ -e "$dst/$name" ]; then
-      mkdir -p "$(dirname "$keep_tmp/$name")"
-      cp -a "$dst/$name" "$keep_tmp/$name"
+  local item base
+  shopt -s dotglob nullglob
+  for item in "$dst"/*; do
+    [ -e "$item" ] || continue
+    base="$(basename "$item")"
+    if is_protected_name "$base" "${protected[@]}"; then
+      echo "Keep protected file: $dst/$base"
+      continue
     fi
+    rm -rf "$item" 2>/dev/null || true
   done
 
-  find "$dst" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
-  cp -a "$src"/. "$dst"/ || true
-
-  for name in "$@"; do
-    if [ -e "$keep_tmp/$name" ]; then
-      rm -rf "$dst/$name"
-      mkdir -p "$(dirname "$dst/$name")"
-      cp -a "$keep_tmp/$name" "$dst/$name"
+  for item in "$src"/* "$src"/.[!.]* "$src"/..?*; do
+    [ -e "$item" ] || continue
+    base="$(basename "$item")"
+    if is_protected_name "$base" "${protected[@]}"; then
+      continue
     fi
+    cp -a "$item" "$dst/$base"
   done
-  rm -rf "$keep_tmp"
+  shopt -u dotglob nullglob
 }
 
 ensure_swap
@@ -85,24 +115,28 @@ if [ -f "$RELEASE_DIR/api.tar.gz" ]; then
   echo "==> API"
   mkdir -p "$API_DIR"
   TMP="$(mktemp -d)"
-  tar -xzf "$RELEASE_DIR/api.tar.gz" -C "$TMP"
+  run_step "Extract api.tar.gz" tar -xzf "$RELEASE_DIR/api.tar.gz" -C "$TMP"
   # 保留运行时数据；node_modules 用 CI 产物覆盖
-  sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db
+  run_step "Sync API files" sync_tree "$TMP" "$API_DIR" .env uploads data.db prod.db
   rm -rf "$TMP"
   cd "$API_DIR"
   if [ ! -f .env ]; then
     echo "WARNING: $API_DIR/.env missing — create it before restart"
+  else
+    echo "DATABASE_URL=$(grep -E '^DATABASE_URL=' .env | cut -d= -f2- || true)"
   fi
   if [ ! -d node_modules ]; then
     echo "WARNING: api node_modules missing in release; fallback install (may OOM on 1G)"
-    npm install --omit=dev --no-fund --no-audit --maxsockets 1
+    run_step "Install API dependencies" npm install --omit=dev --no-fund --no-audit --maxsockets 1
   fi
-  npx prisma generate
-  npx prisma migrate deploy
-  mkdir -p uploads
-  pm2 describe shangqi-api >/dev/null 2>&1 \
-    && pm2 restart shangqi-api --update-env \
-    || pm2 start dist/main.js --name shangqi-api --cwd "$API_DIR"
+  run_step "Prisma generate" npx prisma generate
+  run_step "Prisma migrate deploy" npx prisma migrate deploy
+  run_step "Ensure uploads dir" mkdir -p uploads
+  if pm2 describe shangqi-api >/dev/null 2>&1; then
+    run_step "Restart shangqi-api" pm2 restart shangqi-api --update-env
+  else
+    run_step "Start shangqi-api" pm2 start dist/main.js --name shangqi-api --cwd "$API_DIR"
+  fi
 fi
 
 # ---- Website ----
@@ -110,21 +144,23 @@ if [ -f "$RELEASE_DIR/website.tar.gz" ]; then
   echo "==> Website"
   mkdir -p "$WEB_DIR"
   TMP="$(mktemp -d)"
-  tar -xzf "$RELEASE_DIR/website.tar.gz" -C "$TMP"
-  sync_tree "$TMP" "$WEB_DIR"
+  run_step "Extract website.tar.gz" tar -xzf "$RELEASE_DIR/website.tar.gz" -C "$TMP"
+  run_step "Sync website files" sync_tree "$TMP" "$WEB_DIR"
   rm -rf "$TMP"
   cd "$WEB_DIR/.output/server"
   if [ ! -d node_modules ]; then
     echo "WARNING: website node_modules missing; fallback install"
     if command -v yarn >/dev/null 2>&1; then
-      yarn install --production
+      run_step "Install website dependencies (yarn)" yarn install --production
     else
-      npm install --omit=dev --no-fund --no-audit --maxsockets 1 || true
+      run_step "Install website dependencies (npm)" npm install --omit=dev --no-fund --no-audit --maxsockets 1
     fi
   fi
-  pm2 describe shangqi-web >/dev/null 2>&1 \
-    && pm2 restart shangqi-web --update-env \
-    || PORT=3000 HOST=0.0.0.0 pm2 start index.mjs --name shangqi-web --cwd "$WEB_DIR/.output/server"
+  if pm2 describe shangqi-web >/dev/null 2>&1; then
+    run_step "Restart shangqi-web" pm2 restart shangqi-web --update-env
+  else
+    run_step "Start shangqi-web" env PORT=3000 HOST=0.0.0.0 pm2 start index.mjs --name shangqi-web --cwd "$WEB_DIR/.output/server"
+  fi
 fi
 
 # ---- Admin ----
@@ -132,12 +168,12 @@ if [ -f "$RELEASE_DIR/admin.tar.gz" ]; then
   echo "==> Admin"
   mkdir -p "$ADMIN_DIR"
   TMP="$(mktemp -d)"
-  tar -xzf "$RELEASE_DIR/admin.tar.gz" -C "$TMP"
+  run_step "Extract admin.tar.gz" tar -xzf "$RELEASE_DIR/admin.tar.gz" -C "$TMP"
   # 保留宝塔 .user.ini（常带不可变属性，强删会失败）
-  sync_tree "$TMP" "$ADMIN_DIR" .user.ini
+  run_step "Sync admin files" sync_tree "$TMP" "$ADMIN_DIR" .user.ini
   rm -rf "$TMP"
 fi
 
-pm2 save
+run_step "PM2 save" pm2 save
 pm2 status
 echo "==> Deploy finished"
