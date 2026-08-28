@@ -9,7 +9,7 @@ import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import SearchFilters from "@/components/SearchFilters/index.vue";
 import type { SearchFilterField } from "@/components/SearchFilters/types";
 import { productI18nName } from "@/utils/locale";
-import ProductDetailDrawer from "@/components/ProductDetailDrawer.vue";
+import ProductDetailDrawer from "@/views/product/components/ProductDetailDrawer.vue";
 
 defineOptions({ name: "CmsNewHot" });
 

@@ -14,7 +14,7 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
-import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
+import MediaPreviewTile from "@/views/product/components/MediaPreviewTile.vue";
 
 defineOptions({ name: "CmsVehicle" });
 

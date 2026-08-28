@@ -11,7 +11,7 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
-import VehicleDetailDialog from "@/components/VehicleDetailDialog.vue";
+import VehicleDetailDialog from "./components/VehicleDetailDialog.vue";
 import { EN_TEXT_MAX, ZH_TEXT_MAX } from "@/utils/locale";
 import SearchFilters from "@/components/SearchFilters/index.vue";
 import type { SearchFilterField } from "@/components/SearchFilters/types";

@@ -91,9 +91,9 @@ export const COLUMNS: ColumnDef[] = [
   {
     key: 'slug',
     header: 'Slug',
-    required: true,
+    required: false,
     aliases: ['slug', 'url别名'],
-    note: '手动填写。前台链接标识，全局唯一。',
+    note: '可留空。留空时系统按 SKU 自动生成唯一链接标识。',
     input: 'text',
   },
   {

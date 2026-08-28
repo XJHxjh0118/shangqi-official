@@ -26,7 +26,7 @@ import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import SearchFilters from "@/components/SearchFilters/index.vue";
 import type { SearchFilterField } from "@/components/SearchFilters/types";
-import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
+import MediaPreviewTile from "@/views/product/components/MediaPreviewTile.vue";
 import {
   buildListQuery,
   ENABLED_FILTER_OPTIONS

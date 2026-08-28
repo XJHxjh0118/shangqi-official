@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox, type UploadRequestOptions } from "element-plus";
+import QuestionFilled from "~icons/ep/question-filled";
 import {
   batchDeleteProducts,
   batchUpdateProducts,
@@ -31,6 +32,7 @@ import {
   SEO_KEYWORDS_MAX,
   seoTitleMaxLength
 } from "@/utils/locale";
+import { buildProductSlugPreview } from "@/utils/slug";
 import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
@@ -40,9 +42,9 @@ import type {
   SearchFilterField,
   SearchFilterTreeOption
 } from "@/components/SearchFilters/types";
-import ProductDetailDrawer from "@/components/ProductDetailDrawer.vue";
-import ProductImportDialog from "@/components/ProductImportDialog.vue";
-import MediaPreviewTile from "@/components/MediaPreviewTile.vue";
+import ProductDetailDrawer from "./components/ProductDetailDrawer.vue";
+import ProductImportDialog from "./components/ProductImportDialog.vue";
+import MediaPreviewTile from "./components/MediaPreviewTile.vue";
 
 defineOptions({ name: "ProductList" });
 
@@ -230,9 +232,20 @@ const seoPreviewDescription = computed(() => {
   );
 });
 
-const seoPreviewPath = computed(
-  () => `/products/${form.slug.trim() || "product-slug"}`
-);
+const seoPreviewPath = computed(() => {
+  const slug = editingId.value
+    ? form.slug.trim()
+    : slugPreview.value || "product-slug";
+  return `/products/${slug}`;
+});
+
+const slugPreview = computed(() => {
+  const enName = i18nEntries.value.find(item => item.locale === "en")?.name || "";
+  return buildProductSlugPreview(form.sku, enName);
+});
+
+const slugTip =
+  "用于官网产品详情页地址，例如 /products/mg4-floor-mat。系统根据 SKU 自动生成并保证唯一，创建后不建议修改。";
 
 /** 把后端绝对地址转成走 Vite 代理的相对路径，便于本地预览 */
 function toDisplayUrl(url?: string | null) {
@@ -390,9 +403,8 @@ async function openEdit(row: any) {
 }
 
 function buildPayload() {
-  return {
+  const payload: Record<string, unknown> = {
     sku: form.sku,
-    slug: form.slug,
     categoryId: form.categoryId,
     isNew: form.isNew,
     isHot: form.isHot,
@@ -419,15 +431,12 @@ function buildPayload() {
       seoDescription: e.seoDescription.trim() || undefined
     }))
   };
+  return payload;
 }
 
 async function submit() {
   if (!form.sku?.trim()) {
     ElMessage.warning("请填写 SKU");
-    return;
-  }
-  if (!form.slug?.trim()) {
-    ElMessage.warning("请填写 Slug");
     return;
   }
   if (!form.categoryId) {
@@ -1174,8 +1183,22 @@ onMounted(async () => {
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="Slug" required>
-                <el-input v-model="form.slug" />
+              <el-form-item>
+                <template #label>
+                  <span class="label-with-tip">
+                    URL 别名
+                    <el-tooltip :content="slugTip" placement="top">
+                      <el-icon class="label-tip-icon"><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </span>
+                </template>
+                <template v-if="editingId">
+                  <span class="slug-readonly">{{ form.slug }}</span>
+                </template>
+                <p v-else class="slug-auto-hint">
+                  系统将自动生成：
+                  <strong>{{ slugPreview || "填写 SKU 后生成" }}</strong>
+                </p>
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -1665,6 +1688,37 @@ onMounted(async () => {
   font-weight: 600;
   color: var(--el-text-color-primary);
   border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-tip-icon {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  cursor: help;
+}
+
+.slug-auto-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+}
+
+.slug-auto-hint strong {
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+
+.slug-readonly {
+  font-size: 13px;
+  line-height: 32px;
+  color: var(--el-text-color-primary);
+  word-break: break-all;
 }
 
 .product-form > .form-section-title:not(:first-child) {

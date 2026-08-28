@@ -14,6 +14,11 @@ import {
   BatchProductDto,
 } from './dto/product.dto';
 import { serializeProduct } from './product-media';
+import {
+  buildProductSlugBase,
+  resolveUniqueProductSlug,
+  slugify,
+} from '../../common/slug.util';
 
 const productInclude = {
   category: { include: { parent: true } },
@@ -80,12 +85,21 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto) {
-    await this.ensureUnique(dto.sku, dto.slug);
-    const { i18n, vehicleIds, ...rest } = dto;
+    const { i18n, vehicleIds, slug: inputSlug, ...rest } = dto;
     assertRequiredLocales(i18n, '名称');
+    const enName = i18n.find((item) => item.locale === 'en')?.name;
+    const slugBase = inputSlug?.trim()
+      ? slugify(inputSlug)
+      : buildProductSlugBase(rest.sku, enName);
+    if (!slugBase) {
+      throw new BadRequestException('无法生成 URL 别名，请检查 SKU');
+    }
+    const slug = await resolveUniqueProductSlug(this.prisma, slugBase);
+    await this.ensureUnique(rest.sku, slug);
     return this.prisma.product.create({
       data: {
         ...rest,
+        slug,
         i18n: { create: i18n },
         ...(vehicleIds?.length
           ? {

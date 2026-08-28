@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getPageSeos, upsertPageSeo } from "@/api/page-seo";
 import { getSiteSettings, updateSiteSettings } from "@/api/site-settings";
-import RichTextEditor from "@/components/RichTextEditor.vue";
+import RichTextEditor from "./components/RichTextEditor.vue";
 import {
   localeLabel,
   SEO_DESC_MAX,

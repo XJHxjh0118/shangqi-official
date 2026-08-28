@@ -29,7 +29,7 @@ import ToolbarTable from "@/components/ToolbarTable/index.vue";
 import type { ToolbarTableColumn } from "@/components/ToolbarTable/types";
 import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
-import CategoryDetailDialog from "@/components/CategoryDetailDialog.vue";
+import CategoryDetailDialog from "./components/CategoryDetailDialog.vue";
 import SearchFilters from "@/components/SearchFilters/index.vue";
 import type { SearchFilterField } from "@/components/SearchFilters/types";
 import {

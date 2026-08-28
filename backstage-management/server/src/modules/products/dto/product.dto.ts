@@ -109,9 +109,10 @@ export class CreateProductDto {
   @IsString()
   sku: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: '留空时系统按 SKU 自动生成唯一 URL 别名' })
+  @IsOptional()
   @IsString()
-  slug: string;
+  slug?: string;
 
   @ApiProperty()
   @Type(() => Number)

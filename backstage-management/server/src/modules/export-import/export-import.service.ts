@@ -3,6 +3,11 @@ import { Prisma, type ProductStatus } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import * as XLSX from 'xlsx';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  buildProductSlugBase,
+  resolveUniqueProductSlug,
+  slugify,
+} from '../../common/slug.util';
 import { serializeProduct } from '../products/product-media';
 import {
   COLUMNS,
@@ -306,18 +311,32 @@ export class ExportImportService {
       if (isEmptyImportedRow(values)) continue;
       try {
         const sku = cellText(values.sku);
-        const slug = cellText(values.slug);
+        let slug = slugify(cellText(values.slug));
         const categoryRaw = cellText(values.category);
         const nameZh = cellText(values.nameZh);
         const nameEn = cellText(values.nameEn);
         const missing: string[] = [];
         if (!sku) missing.push('SKU');
-        if (!slug) missing.push('Slug');
         if (!categoryRaw) missing.push('分类');
         if (!nameZh) missing.push('中文名');
         if (!nameEn) missing.push('英文名');
         if (missing.length) {
           throw new Error(`缺少必填字段：${missing.join('、')}`);
+        }
+
+        const existing = await this.prisma.product.findUnique({
+          where: { sku },
+        });
+
+        if (!slug) {
+          const slugBase = buildProductSlugBase(sku, nameEn);
+          if (!slugBase) {
+            throw new Error('无法根据 SKU 生成 URL 别名');
+          }
+          slug = await resolveUniqueProductSlug(this.prisma, slugBase, {
+            excludeId: existing?.id,
+            reserved: new Set(slugSeen.keys()),
+          });
         }
 
         const skuKey = sku.toLowerCase();
@@ -326,7 +345,7 @@ export class ExportImportService {
           throw new Error(`SKU「${sku}」与${rowLabel(skuSeen.get(skuKey)!)}重复`);
         }
         if (slugSeen.has(slugKey)) {
-          throw new Error(`Slug「${slug}」与${rowLabel(slugSeen.get(slugKey)!)}重复`);
+          throw new Error(`URL 别名「${slug}」与${rowLabel(slugSeen.get(slugKey)!)}重复`);
         }
         skuSeen.set(skuKey, sheetRow);
         slugSeen.set(slugKey, sheetRow);
@@ -357,14 +376,11 @@ export class ExportImportService {
           );
         }
 
-        const existing = await this.prisma.product.findUnique({
-          where: { sku },
-        });
         const slugOwner = await this.prisma.product.findUnique({
           where: { slug },
         });
         if (slugOwner && slugOwner.id !== existing?.id) {
-          throw new Error(`Slug「${slug}」已被其他产品占用`);
+          throw new Error(`URL 别名「${slug}」已被其他产品占用`);
         }
 
         items.push({

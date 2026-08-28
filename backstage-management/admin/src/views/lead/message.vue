@@ -8,7 +8,7 @@ import ActionButtons from "@/components/ActionButtons/index.vue";
 import type { ActionButtonItem } from "@/components/ActionButtons/types";
 import SearchFilters from "@/components/SearchFilters/index.vue";
 import type { SearchFilterField } from "@/components/SearchFilters/types";
-import LeadHandleDialog from "@/components/LeadHandleDialog.vue";
+import LeadHandleDialog from "./components/LeadHandleDialog.vue";
 import { parseTime } from "@/components/ToolbarTable/parseTime";
 import {
   HANDLE_METHODS,
