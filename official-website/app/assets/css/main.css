@@ -1154,7 +1154,8 @@ body::after {
 
 .scroll-hero-track {
   position: relative;
-  height: 500vh;
+  /* 高度由 HomeScrollVideo 按 banner 数量动态设置 */
+  height: 200vh;
   background: var(--color-hero);
 }
 
@@ -1243,6 +1244,30 @@ body::after {
 .scroll-stagger.is-in {
   opacity: 1;
   transform: none;
+}
+
+.scroll-scene-banner-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 24px;
+  max-width: min(920px, calc(100% - 96px));
+}
+
+.scroll-scene-banner h1 {
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  font-size: clamp(2rem, 5vw, 5rem);
+  max-width: 18ch;
+  white-space: pre-line;
+}
+
+.scroll-scene-banner .scroll-cta {
+  margin-top: 28px;
 }
 
 .scroll-scene-1-copy {
@@ -1419,6 +1444,7 @@ body::after {
 
 @media (min-width: 640px) {
   .scroll-scene-1-copy,
+  .scroll-scene-banner-copy,
   .scroll-scene-2,
   .scroll-scene-3 {
     padding-left: 32px;
@@ -1433,6 +1459,7 @@ body::after {
 
 @media (min-width: 768px) {
   .scroll-scene-1-copy,
+  .scroll-scene-banner-copy,
   .scroll-scene-3 {
     padding-left: 80px;
     padding-right: 80px;
@@ -1446,6 +1473,7 @@ body::after {
 
 @media (min-width: 1024px) {
   .scroll-scene-1-copy,
+  .scroll-scene-banner-copy,
   .scroll-scene-3 {
     padding-left: 128px;
     padding-right: 128px;

@@ -40,27 +40,23 @@ export function useHomePageData() {
   }
 
   const heroSlides = computed<HeroSlide[]>(() => {
-    const fromApi = (homeRaw.value?.banners || [])
-      .map((b): HeroSlide | null => {
-        const image = resolveAssetUrl(b.imageUrl, apiBase)
-        if (!image) return null
-        return {
-          image,
-          title: bannerTitle(b) || t('home.heroTitle'),
-          linkUrl: b.linkUrl || undefined,
-        }
-      })
-      .filter((s): s is HeroSlide => s !== null)
+    const seen = new Set<string>()
+    const slides: HeroSlide[] = []
 
-    const images = resolveHeroBanners(fromApi.map((s) => s.image))
-    return images.map((image) => {
-      const matched = fromApi.find((s) => s.image === image)
-      return {
+    for (const b of homeRaw.value?.banners || []) {
+      const raw = resolveAssetUrl(b.imageUrl, apiBase)
+      if (!raw) continue
+      const image = resolveHeroBanners([raw])[0]
+      if (!image || seen.has(image)) continue
+      seen.add(image)
+      slides.push({
         image,
-        title: matched?.title || t('home.heroTitle'),
-        linkUrl: matched?.linkUrl,
-      }
-    })
+        title: bannerTitle(b).trim() || t('home.heroTitle'),
+        linkUrl: b.linkUrl || undefined,
+      })
+    }
+
+    return slides
   })
 
   function mapList(raw?: { list?: unknown[] } | null) {
