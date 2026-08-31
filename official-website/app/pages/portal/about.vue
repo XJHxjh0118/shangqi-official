@@ -18,11 +18,19 @@ const bodyIsHtml = computed(() => isRichHtml(body.value))
 const bodyHtml = computed(() =>
   bodyIsHtml.value ? prepareRichHtml(body.value, apiBase) : '',
 )
+
+const pageRoot = ref<HTMLElement | null>(null)
+const { refresh: refreshReveal } = usePortalReveal(pageRoot)
+
+watch(
+  () => [body.value, bodyIsHtml.value],
+  () => nextTick(refreshReveal),
+)
 </script>
 
 <template>
-  <div class="p-section">
-    <div class="p-section-head">
+  <div ref="pageRoot" class="p-section">
+    <div class="p-section-head p-reveal">
       <div class="p-eyebrow">About</div>
       <h1>{{ title }}</h1>
       <p>{{ description }}</p>
@@ -31,9 +39,14 @@ const bodyHtml = computed(() =>
       v-if="bodyIsHtml"
       class="p-card"
       style="padding: 24px; line-height: 1.75"
+      data-reveal-blocks
       v-html="bodyHtml"
     />
-    <div v-else class="p-card" style="padding: 24px; line-height: 1.75; white-space: pre-wrap">
+    <div
+      v-else
+      class="p-card p-reveal"
+      style="padding: 24px; line-height: 1.75; white-space: pre-wrap"
+    >
       {{ body }}
     </div>
   </div>

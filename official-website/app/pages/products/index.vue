@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhSquaresFour, PhRows } from '@phosphor-icons/vue'
+import { PhCircleNotch, PhMagnifyingGlass, PhRows, PhSquaresFour } from '@phosphor-icons/vue'
 import { vehicleLabel } from '~/data/products'
 
 const catalog = useProductsCatalog()
@@ -12,12 +12,26 @@ const {
   vehicleId,
   viewMode,
   pending,
+  refreshing,
+  loadingMore,
+  hasMore,
   list,
   flatCategories,
   vehicles,
   applyFilters,
+  onSearchInput,
+  loadMore,
   getLocalized,
 } = catalog
+
+const { withViewTransition } = useViewTransition()
+
+function setViewMode(mode: 'grid' | 'list') {
+  if (viewMode.value === mode) return
+  withViewTransition(() => {
+    viewMode.value = mode
+  })
+}
 </script>
 
 <template>
@@ -37,12 +51,25 @@ const {
       </header>
 
       <form class="catalog-bar" @submit.prevent="applyFilters">
-        <input
-          v-model="q"
-          class="search-field"
-          type="search"
-          :placeholder="t('products.searchPlaceholder')"
-        />
+        <div class="search-field-wrap">
+          <input
+            v-model="q"
+            class="search-field"
+            type="search"
+            :placeholder="t('products.searchPlaceholder')"
+            @input="onSearchInput"
+            @search="onSearchInput"
+          />
+          <button
+            class="search-submit"
+            type="submit"
+            :aria-label="t('common.search')"
+            :disabled="pending || refreshing"
+          >
+            <PhCircleNotch v-if="pending" :size="18" class="search-spinner" />
+            <PhMagnifyingGlass v-else :size="18" />
+          </button>
+        </div>
         <select
           class="select-field"
           :value="category || ''"
@@ -74,7 +101,7 @@ const {
               type="button"
               :aria-pressed="viewMode === 'grid'"
               :aria-label="t('products.viewGrid')"
-              @click="viewMode = 'grid'"
+              @click="setViewMode('grid')"
             >
               <PhSquaresFour :size="18" />
             </button>
@@ -89,7 +116,7 @@ const {
               type="button"
               :aria-pressed="viewMode === 'list'"
               :aria-label="t('products.viewList')"
-              @click="viewMode = 'list'"
+              @click="setViewMode('list')"
             >
               <PhRows :size="18" />
             </button>
@@ -97,22 +124,27 @@ const {
         </div>
       </form>
 
-      <ProductGridSkeleton v-if="pending" />
       <div
-        v-else-if="list.length && viewMode === 'grid'"
-        class="product-grid"
+        class="catalog-results"
+        :class="{ 'is-loading': refreshing || (pending && list.length) }"
       >
-        <ProductCard v-for="p in list" :key="p.id" :product="p" />
-      </div>
-      <div v-else-if="list.length" class="product-list">
-        <ProductCard
-          v-for="p in list"
-          :key="p.id"
-          :product="p"
-          mode="list"
+        <ProductGridSkeleton v-if="pending && !list.length" />
+        <ProductCatalogList
+          v-else-if="list.length"
+          :items="list"
+          :view-mode="viewMode"
+          variant="main"
+          :loading-more="loadingMore"
+          :has-more="hasMore"
+          :refreshing="refreshing"
+          @load-more="loadMore"
+        />
+        <VehicleEmptyState
+          v-else
+          :title="t('products.noResult')"
+          :description="t('products.emptyDesc')"
         />
       </div>
-      <p v-else class="empty-state">{{ t('products.noResult') }}</p>
     </div>
   </div>
 </template>

@@ -17,22 +17,30 @@ const {
   selectRegion,
   telHref,
 } = useContactPage()
+
+const pageRoot = ref<HTMLElement | null>(null)
+const { refresh: refreshReveal } = usePortalReveal(pageRoot)
+
+watch(
+  () => [pending.value, contacts.value.length, submitted.value],
+  () => nextTick(refreshReveal),
+)
 </script>
 
 <template>
-  <div class="p-section">
-    <div class="p-section-head">
+  <div ref="pageRoot" class="p-section">
+    <div class="p-section-head p-reveal">
       <div class="p-eyebrow">{{ t('template.contactEyebrow') }}</div>
       <h1>{{ t('contact.title') }}</h1>
       <p>{{ t('contact.desc') }}</p>
     </div>
 
-    <div v-if="pending && !contacts.length" class="p-empty">{{ t('common.loading') }}</div>
+    <div v-if="pending && !contacts.length" class="p-empty p-reveal">{{ t('common.loading') }}</div>
     <div v-else class="p-contact-grid" style="margin-bottom: 28px">
       <button
         v-for="c in contacts"
         :key="c.id"
-        class="p-contact-card"
+        class="p-contact-card p-reveal"
         type="button"
         style="text-align: left; cursor: pointer; width: 100%"
         @click="selectRegion(c.id, c.regionValue)"
@@ -46,11 +54,11 @@ const {
       </button>
     </div>
 
-    <div v-if="submitted" class="p-empty">{{ t('contact.success') }}</div>
+    <div v-if="submitted" class="p-empty p-reveal">{{ t('contact.success') }}</div>
     <el-form
       v-else
       ref="formRef"
-      class="p-form"
+      class="p-form p-reveal"
       :model="form"
       :rules="rules"
       label-position="top"

@@ -14,17 +14,21 @@ const bodyIsHtml = computed(() => isRichHtml(body.value))
 const bodyHtml = computed(() =>
   bodyIsHtml.value ? prepareRichHtml(body.value, apiBase) : '',
 )
+
+useScrollReveal(() => [body.value, bodyIsHtml.value])
 </script>
 
 <template>
   <div class="page">
     <div class="container">
-      <header class="page-head">
+      <header class="page-head" data-reveal>
         <h1>{{ title }}</h1>
         <p>{{ description }}</p>
       </header>
-      <div v-if="bodyIsHtml" class="about-body" v-html="bodyHtml" />
-      <div v-else class="about-body is-plain">{{ body }}</div>
+      <div v-if="bodyIsHtml" class="about-body" data-reveal-blocks v-html="bodyHtml" />
+      <div v-else class="about-body is-plain" data-reveal-blocks>
+        <p>{{ body }}</p>
+      </div>
     </div>
   </div>
 </template>

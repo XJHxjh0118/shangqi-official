@@ -12,6 +12,9 @@ const localePath = useLocalePath()
 
 const name = computed(() => getLocalized(props.product.name, locale.value))
 const isList = computed(() => props.mode === 'list')
+const mediaWellRef = ref<HTMLElement | null>(null)
+
+useGridImagePan(mediaWellRef, computed(() => !isList.value))
 
 function filled(value: string) {
   return Boolean(value && value !== '—')
@@ -45,7 +48,7 @@ const specLine = computed(() => {
     :to="localePath(`/products/${product.slug}`)"
     prefetch
   >
-    <div class="media-well">
+    <div ref="mediaWellRef" class="media-well">
       <img
         :src="product.previewImages[0] || product.images[0]"
         :alt="name"

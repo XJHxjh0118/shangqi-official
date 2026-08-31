@@ -1,8 +1,9 @@
-import { watchDebounced } from '@vueuse/core'
 import { getLocalized } from '~/data/products'
 import { mapApiProduct } from '~/utils/mapProduct'
-import type { ApiCategory } from '~/types/api'
+import type { ApiCategory, ApiProductList } from '~/types/api'
 import { useCachedAsyncData } from '~/composables/useDataCache'
+
+const PAGE_SIZE = 24
 
 export function useProductsCatalog(options?: { basePath?: string }) {
   const { t, locale } = useI18n()
@@ -26,6 +27,12 @@ export function useProductsCatalog(options?: { basePath?: string }) {
   )
   const viewMode = ref<'grid' | 'list'>('grid')
 
+  const extraItems = ref<ReturnType<typeof mapApiProduct>[]>([])
+  const currentPage = ref(1)
+  const loadingMore = ref(false)
+  /** loadMore 后服务端返回的最新 total；筛选变化时置 null，回退到首屏数据 */
+  const paginationTotal = ref<number | null>(null)
+
   watch(
     () => route.query,
     (query) => {
@@ -33,14 +40,6 @@ export function useProductsCatalog(options?: { basePath?: string }) {
       category.value = query.category ? String(query.category) : null
       vehicleId.value = query.vehicleId ? String(query.vehicleId) : null
     },
-  )
-
-  watchDebounced(
-    q,
-    () => {
-      applyFilters()
-    },
-    { debounce: 400 },
   )
 
   const categoriesAsync = useCachedAsyncData(
@@ -56,31 +55,54 @@ export function useProductsCatalog(options?: { basePath?: string }) {
     return `products-list:${keyword}:${cat}:${vehicle}`
   })
 
+  function buildProductQuery(page: number) {
+    const query = route.query
+    const keyword = query.q ? String(query.q) : undefined
+    const cat = query.category ? String(query.category) : undefined
+    const vehicle = query.vehicleId ? Number(query.vehicleId) : undefined
+    return {
+      keyword,
+      category: cat && cat !== 'all' ? cat : undefined,
+      vehicleId: vehicle && !Number.isNaN(vehicle) ? vehicle : undefined,
+      page,
+      pageSize: PAGE_SIZE,
+    }
+  }
+
   const productsAsync = useCachedAsyncData(
     () => productsKey.value,
-    () => {
-      const query = route.query
-      const keyword = query.q ? String(query.q) : undefined
-      const cat = query.category ? String(query.category) : undefined
-      const vehicle = query.vehicleId ? Number(query.vehicleId) : undefined
-      return getProducts({
-        keyword,
-        category: cat && cat !== 'all' ? cat : undefined,
-        vehicleId: vehicle && !Number.isNaN(vehicle) ? vehicle : undefined,
-        pageSize: 48,
-      })
-    },
+    () => getProducts(buildProductQuery(1)),
     {
       watch: [() => route.query],
     },
   )
 
   const { data: categoriesRaw } = categoriesAsync
-  const { data: productsRaw, pending } = productsAsync
+  const { data: productsRaw, pending: initialPending } = productsAsync
 
   const vehiclesAsync = useCachedAsyncData(
     'products-vehicles',
     () => getVehicles(),
+  )
+
+  watch(
+    productsKey,
+    () => {
+      extraItems.value = []
+      currentPage.value = 1
+      paginationTotal.value = null
+    },
+    { flush: 'sync' },
+  )
+
+  watch(
+    productsRaw,
+    (data) => {
+      extraItems.value = []
+      currentPage.value = data?.page ?? 1
+      paginationTotal.value = null
+    },
+    { immediate: true },
   )
 
   function categoryLabel(code: string, nameZh: string, nameEn: string) {
@@ -105,11 +127,41 @@ export function useProductsCatalog(options?: { basePath?: string }) {
     return out
   })
 
-  const list = computed(() =>
-    (productsRaw.value?.list || []).map((p) => mapApiProduct(p, apiBase)),
+  const total = computed(
+    () => paginationTotal.value ?? productsRaw.value?.total ?? 0,
   )
 
+  const list = computed(() => {
+    const first = (productsRaw.value?.list || []).map((p) =>
+      mapApiProduct(p, apiBase),
+    )
+    return [...first, ...extraItems.value]
+  })
+
+  const hasMore = computed(() => {
+    const count = total.value
+    if (count <= 0) return false
+    return list.value.length < count
+  })
+  const pending = computed(() => initialPending.value && !list.value.length)
+  const refreshing = computed(() => initialPending.value && list.value.length > 0)
+
   const vehicles = computed(() => vehiclesAsync.data.value || [])
+
+  async function loadMore() {
+    if (loadingMore.value || initialPending.value || !hasMore.value) return
+    loadingMore.value = true
+    try {
+      const nextPage = currentPage.value + 1
+      const data: ApiProductList = await getProducts(buildProductQuery(nextPage))
+      const mapped = (data.list || []).map((p) => mapApiProduct(p, apiBase))
+      extraItems.value = [...extraItems.value, ...mapped]
+      currentPage.value = data.page ?? nextPage
+      paginationTotal.value = data.total ?? paginationTotal.value
+    } finally {
+      loadingMore.value = false
+    }
+  }
 
   function applyFilters() {
     const query: Record<string, string> = {}
@@ -117,6 +169,13 @@ export function useProductsCatalog(options?: { basePath?: string }) {
     if (category.value) query.category = category.value
     if (vehicleId.value) query.vehicleId = vehicleId.value
     router.push({ path: localePath(basePath), query })
+  }
+
+  function onSearchInput(event: Event) {
+    const value = (event.target as HTMLInputElement).value
+    if (!value && route.query.q) {
+      applyFilters()
+    }
   }
 
   function setCategory(code: string | null) {
@@ -133,11 +192,17 @@ export function useProductsCatalog(options?: { basePath?: string }) {
     vehicleId,
     viewMode,
     pending,
+    refreshing,
+    loadingMore,
+    hasMore,
+    total,
     list,
     flatCategories,
     vehicles,
     applyFilters,
+    onSearchInput,
     setCategory,
+    loadMore,
     getLocalized,
   }
 }

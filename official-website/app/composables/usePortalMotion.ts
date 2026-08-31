@@ -63,6 +63,15 @@ export function usePortalReveal(root: Ref<HTMLElement | null>) {
   function refresh() {
     if (!import.meta.client || !root.value) return
     ensureObserver()
+
+    for (const container of root.value.querySelectorAll<HTMLElement>('[data-reveal-blocks]')) {
+      for (const child of container.children) {
+        if (child instanceof HTMLElement && !child.classList.contains('p-reveal')) {
+          child.classList.add('p-reveal')
+        }
+      }
+    }
+
     const targets = root.value.querySelectorAll('.p-reveal:not(.is-visible)')
     targets.forEach((element) => {
       const el = element as HTMLElement

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PhCircleNotch, PhMagnifyingGlass } from '@phosphor-icons/vue'
 import { vehicleLabel } from '~/data/products'
 
 definePageMeta({
@@ -14,19 +15,32 @@ const {
   vehicleId,
   viewMode,
   pending,
+  refreshing,
+  loadingMore,
+  hasMore,
   list,
   flatCategories,
   vehicles,
   applyFilters,
+  onSearchInput,
+  loadMore,
   getLocalized,
   localePath,
 } = catalog
 
 const pageRoot = ref<HTMLElement | null>(null)
 const { refresh: refreshReveal } = usePortalReveal(pageRoot)
+const { withViewTransition } = useViewTransition()
+
+function setViewMode(mode: 'grid' | 'list') {
+  if (viewMode.value === mode) return
+  withViewTransition(() => {
+    viewMode.value = mode
+  })
+}
 
 watch(
-  () => [list.value.length, viewMode.value, pending.value],
+  () => [list.value.length, viewMode.value, pending.value, loadingMore.value],
   async () => {
     await nextTick()
     refreshReveal()
@@ -51,9 +65,26 @@ watch(
     </div>
 
     <form class="p-toolbar p-reveal" @submit.prevent="applyFilters">
-      <label>
+      <label class="p-search-field">
         <span>{{ t('products.searchPlaceholder') }}</span>
-        <input v-model="q" type="search" :placeholder="t('products.searchPlaceholder')" />
+        <div class="p-search-input-wrap">
+          <input
+            v-model="q"
+            type="search"
+            :placeholder="t('products.searchPlaceholder')"
+            @input="onSearchInput"
+            @search="onSearchInput"
+          />
+          <button
+            class="p-search-submit"
+            type="submit"
+            :aria-label="t('common.search')"
+            :disabled="pending || refreshing"
+          >
+            <PhCircleNotch v-if="pending" :size="18" class="p-search-spinner" />
+            <PhMagnifyingGlass v-else :size="18" />
+          </button>
+        </div>
       </label>
       <label>
         <span>{{ t('products.filterCategory') }}</span>
@@ -89,28 +120,40 @@ watch(
         <button
           type="button"
           :class="{ active: viewMode === 'grid' }"
-          @click="viewMode = 'grid'"
+          @click="setViewMode('grid')"
         >
           ▦
         </button>
         <button
           type="button"
           :class="{ active: viewMode === 'list' }"
-          @click="viewMode = 'list'"
+          @click="setViewMode('list')"
         >
           ☰
         </button>
       </div>
     </form>
 
-    <div v-if="pending && !list.length" class="p-empty">{{ t('common.loading') }}</div>
-    <div v-else-if="!list.length" class="p-empty">{{ t('products.noResult') }}</div>
-    <div v-else class="p-catalog-grid" :class="{ 'is-list': viewMode === 'list' }">
-      <PortalProductCard
-        v-for="product in list"
-        :key="product.id"
-        :product="product"
-        :list-mode="viewMode === 'list'"
+    <div
+      class="p-catalog-results"
+      :class="{ 'is-loading': refreshing || (pending && list.length) }"
+    >
+      <div v-if="pending && !list.length" class="p-empty">{{ t('common.loading') }}</div>
+      <VehicleEmptyState
+        v-else-if="!list.length"
+        variant="portal"
+        :title="t('products.noResult')"
+        :description="t('products.emptyDesc')"
+      />
+      <ProductCatalogList
+        v-else
+        :items="list"
+        :view-mode="viewMode"
+        variant="portal"
+        :loading-more="loadingMore"
+        :has-more="hasMore"
+        :refreshing="refreshing"
+        @load-more="loadMore"
       />
     </div>
   </div>

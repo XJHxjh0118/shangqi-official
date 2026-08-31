@@ -25,23 +25,36 @@ const bodyIsHtml = computed(() => Boolean(body.value) && isRichHtml(body.value))
 const bodyHtml = computed(() =>
   bodyIsHtml.value ? prepareRichHtml(body.value, apiBase) : '',
 )
+
+useScrollReveal(() => [pending.value, contacts.value.length, body.value, bodyIsHtml.value])
 </script>
 
 <template>
   <div class="page">
     <div class="container">
-      <header class="page-head">
+      <header class="page-head" data-reveal>
         <h1>{{ t('contact.title') }}</h1>
         <p>{{ t('contact.desc') }}</p>
       </header>
 
-      <div v-if="bodyIsHtml" class="about-body contact-intro" v-html="bodyHtml" />
-      <div v-else-if="body" class="about-body contact-intro is-plain">{{ body }}</div>
+      <div
+        v-if="bodyIsHtml"
+        class="about-body contact-intro"
+        data-reveal-blocks
+        v-html="bodyHtml"
+      />
+      <div v-else-if="body" class="about-body contact-intro is-plain" data-reveal-blocks>
+        <p>{{ body }}</p>
+      </div>
 
-      <p v-if="pending && !contacts.length">{{ t('common.loading') }}</p>
+      <p v-if="pending && !contacts.length" data-reveal>{{ t('common.loading') }}</p>
 
       <div v-else class="contact-layout">
-        <section class="contact-compose" aria-labelledby="contact-form-title">
+        <section
+          class="contact-compose"
+          aria-labelledby="contact-form-title"
+          data-reveal
+        >
           <h2 id="contact-form-title" class="section-title">
             {{ t('contact.formTitle') }}
           </h2>
@@ -87,6 +100,7 @@ const bodyHtml = computed(() =>
           v-if="contacts.length"
           class="contact-aside"
           aria-labelledby="contact-desk-title"
+          data-reveal
         >
           <h2 id="contact-desk-title">{{ t('contact.deskTitle') }}</h2>
 

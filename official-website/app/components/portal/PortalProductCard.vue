@@ -11,7 +11,9 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { toggleItem, has: inInquiry } = useInquiryList()
 const cardRef = ref<HTMLElement | null>(null)
+const visualRef = ref<HTMLElement | null>(null)
 usePortalCardTilt(cardRef)
+useGridImagePan(visualRef, computed(() => !props.listMode))
 
 const name = computed(() => getLocalized(props.product.name, locale.value))
 const image = computed(
@@ -68,7 +70,7 @@ function onInquiry(event: Event) {
     class="p-product-card p-reveal"
     :class="{ 'is-list': listMode }"
   >
-    <div class="p-product-visual">
+    <div ref="visualRef" class="p-product-visual">
       <img v-if="image" :src="image" :alt="name" loading="lazy" />
     </div>
     <div class="p-product-body">
